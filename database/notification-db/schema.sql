@@ -1,0 +1,14 @@
+SET FOREIGN_KEY_CHECKS = 0;
+
+CREATE TABLE IF NOT EXISTS Notificacao (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    destinatario_id VARCHAR(36) NOT NULL,
+    tipo ENUM('conquista', 'progresso', 'sistema', 'lembrete') NOT NULL,
+    titulo VARCHAR(255) NOT NULL,
+    mensagem TEXT NOT NULL,
+    lida BOOLEAN NOT NULL DEFAULT FALSE,
+    lida_em DATETIME(3),
+    criado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
+);
+
+SET FOREIGN_KEY_CHECKS = 1;
