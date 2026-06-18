@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  mysql:
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "ApoiaMaisDB"
+      MYSQL_USER: "${DB_USER}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - apoiamais-net
+
+  auth-service:
+    build: ./services/auth-service
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/auth-service:/app
+    environment:
+      DB_HOST: "mysql"
+      DB_PORT: "3306"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_NAME: "ApoiaMaisDB"
+    depends_on:
+      - mysql
+    networks:
+      - apoiamais-net
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS}"
+    networks:
+      - apoiamais-net
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - apoiamais-net
+
+networks:
+  apoiamais-net:
+    driver: bridge
+
+volumes:
+  db_data:
