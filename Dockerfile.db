@@ -1,0 +1,9 @@
+FROM mysql:8.0
+
+# Copia explicitamente cada arquivo para a raiz do docker-entrypoint-initdb.d
+# O MySQL vai ler todos eles na ordem em que aparecerem no log
+COPY ./database/auth-db/schema.sql /docker-entrypoint-initdb.d/1_auth_schema.sql
+COPY ./database/auth-db/indexes.sql /docker-entrypoint-initdb.d/2_auth_indexes.sql
+COPY ./database/auth-db/seeds.sql   /docker-entrypoint-initdb.d/3_auth_seeds.sql
+
+# Adicione os outros bancos seguindo o mesmo padrão (ex: ludic-db, etc)
