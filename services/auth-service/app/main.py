@@ -20,6 +20,7 @@ app.add_middleware(
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    print(f"DEBUG ERROR: {str(exc)}") 
     return JSONResponse(
         status_code=500,
         content={"detail": f"Erro interno do servidor: {str(exc)}"},
@@ -27,8 +28,8 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.post("/registrar", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 def registrar(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    
-    if crud.get_user_by_email(db, email=user.email):
+    db_user = crud.get_user_by_email(db, email=user.email)
+    if db_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
             detail="E-mail já cadastrado"
