@@ -9,6 +9,6 @@ class Usuario(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     senha_hash = Column(String(255), nullable=False)
     nome = Column(String(255), nullable=False)
-    # Aqui está o ajuste para casar com o seu ENUM do SQL
+
     cargo = Column(Enum('professor', 'medico', 'administrador', name="cargo_enum"), default='professor', nullable=False)
     esta_ativo = Column(Boolean, default=True, nullable=False)
