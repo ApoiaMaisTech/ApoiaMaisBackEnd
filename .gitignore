@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-venv/
+.venv/
 .env
 
 # IDE
@@ -17,4 +17,4 @@ venv/
 *.pid
 
 # Alembic
-alembic/versions/*.pyc
+alembic/versions/*.pycvenv/
