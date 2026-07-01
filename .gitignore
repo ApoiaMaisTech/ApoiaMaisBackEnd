@@ -17,4 +17,4 @@ venv/
 *.pid
 
 # Alembic
-alembic/versions/*.pyc
+alembic/versions/*.pycvenv/
