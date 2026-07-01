@@ -1,3 +1,0 @@
-[console_scripts]
-detect-installer-test = detect_installer._test:main
-
