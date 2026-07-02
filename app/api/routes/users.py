@@ -6,7 +6,7 @@ from domain.enums.user import UserRole
 from application.use_cases.create_user_usecase import CreateUserUseCase 
 from application.use_cases.users.update_user_usecase import UpdateUserUseCase
 from application.use_cases.users.get_user_usecase import GetUserUseCase
-from application.use_cases.users.delete_user import DeleteUserUseCase
+from application.use_cases.users.delete_user_usecase import DeleteUserUseCase
 from application.dto.update_user_request import UpdateUserRequest
 
 router = APIRouter(prefix="/users", tags=["Users"])
