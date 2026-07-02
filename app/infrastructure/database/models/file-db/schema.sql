@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS Arquivo (
     criado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
 );
 
-CREATE INDEX idx_arquivo_dono_tipo  ON Arquivo(dono_id, tipo_dono); -- composto: busca por dono + tipo
+CREATE INDEX idx_arquivo_dono_tipo  ON Arquivo(dono_id, tipo_dono); 
 CREATE INDEX idx_arquivo_categoria  ON Arquivo(categoria);
 CREATE INDEX idx_arquivo_tipo_mime  ON Arquivo(tipo_mime);
 CREATE INDEX idx_arquivo_criado_em  ON Arquivo(criado_em);
