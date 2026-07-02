@@ -12,3 +12,7 @@ class Usuario(Base):
 
     cargo = Column(Enum('professor', 'medico', 'administrador', name="cargo_enum"), default='professor', nullable=False)
     esta_ativo = Column(Boolean, default=True, nullable=False)
+    
+
+
+
