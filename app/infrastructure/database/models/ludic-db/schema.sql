@@ -5,7 +5,9 @@ CREATE TABLE IF NOT EXISTS Responsavel (
     nome VARCHAR(255) NOT NULL,
     parentesco VARCHAR(50),
     telefone VARCHAR(20),
-    email VARCHAR(255)
+    email VARCHAR(255),
+    criado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+    atualizado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
 );
 
 CREATE TABLE IF NOT EXISTS Paciente (
@@ -20,10 +22,16 @@ CREATE TABLE IF NOT EXISTS Paciente (
     interesses JSON,
     emocao_atual VARCHAR(50) DEFAULT 'neutra',
     url_avatar VARCHAR(255),
-    notas_clinicas TEXT,
     criado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
     atualizado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     FOREIGN KEY (responsavel_id) REFERENCES Responsavel(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS PacienteClinico (
+    paciente_id VARCHAR(36) PRIMARY KEY,
+    notas_clinicas TEXT,
+    atualizado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    FOREIGN KEY (paciente_id) REFERENCES Paciente(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS ItemLoja (
@@ -31,7 +39,9 @@ CREATE TABLE IF NOT EXISTS ItemLoja (
     nome VARCHAR(255) NOT NULL,
     tipo ENUM('avatar', 'fundo', 'acessorio') NOT NULL,
     preco INT NOT NULL,
-    url_imagem VARCHAR(255) NOT NULL
+    url_imagem VARCHAR(255) NOT NULL,
+    criado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+    atualizado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
 );
 
 CREATE TABLE IF NOT EXISTS InventarioPaciente (
@@ -49,7 +59,9 @@ CREATE TABLE IF NOT EXISTS Conquista (
     nome VARCHAR(255) NOT NULL,
     descricao TEXT,
     icone_url VARCHAR(255),
-    xp_bonus INT DEFAULT 0
+    xp_bonus INT DEFAULT 0,
+    criado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+    atualizado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
 );
 
 CREATE TABLE IF NOT EXISTS ConquistaPaciente (
@@ -66,7 +78,9 @@ CREATE TABLE IF NOT EXISTS Mundo (
     nome VARCHAR(255) NOT NULL,
     descricao TEXT,
     ordem INT NOT NULL,
-    esta_ativo BOOLEAN DEFAULT TRUE
+    esta_ativo BOOLEAN DEFAULT TRUE,
+    criado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+    atualizado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
 );
 
 CREATE TABLE IF NOT EXISTS Fase (
@@ -78,6 +92,8 @@ CREATE TABLE IF NOT EXISTS Fase (
     xp_recompensa INT NOT NULL DEFAULT 50,
     moedas_recompensa INT NOT NULL DEFAULT 10,
     instrucoes TEXT,
+    criado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+    atualizado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     FOREIGN KEY (mundo_id) REFERENCES Mundo(id) ON DELETE CASCADE
 );
 
@@ -91,6 +107,8 @@ CREATE TABLE IF NOT EXISTS ProgressoPaciente (
     foi_concluida BOOLEAN DEFAULT FALSE,
     tentativas INT DEFAULT 0,
     ultima_vez_jogada DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    criado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+    atualizado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     UNIQUE KEY unq_paciente_fase (paciente_id, fase_id),
     FOREIGN KEY (paciente_id) REFERENCES Paciente(id) ON DELETE CASCADE,
     FOREIGN KEY (fase_id) REFERENCES Fase(id) ON DELETE CASCADE
@@ -102,9 +120,10 @@ CREATE TABLE IF NOT EXISTS ConteudoIA (
     fase_id VARCHAR(36),
     tipo VARCHAR(50) NOT NULL,
     texto_gerado TEXT,
-    url_midia VARCHAR(255),
+    url_midia TEXT,
     prompt TEXT,
     criado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+    atualizado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     FOREIGN KEY (paciente_id) REFERENCES Paciente(id) ON DELETE CASCADE,
     FOREIGN KEY (fase_id) REFERENCES Fase(id) ON DELETE SET NULL
 );
