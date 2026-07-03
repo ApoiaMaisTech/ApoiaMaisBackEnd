@@ -11,9 +11,9 @@ from application.dto.update_user_request import UpdateUserRequest
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-# rotas de criacao de aluno
-@router.post("/students")
-async def create_student(
+# rotas de criacao de paciente
+@router.post("/patients")
+async def create_patient(
     request: CreateUserRequest,
     use_case: CreateUserUseCase
 ):
@@ -22,9 +22,9 @@ async def create_student(
         role=UserRole.STUDENT,
     )
 
-# rota de criacao de professor
-@router.post("/teachers")
-async def create_teacher(
+# rota de criacao de medico
+@router.post("/doctors")
+async def create_doctor(
     request: CreateUserRequest,
     use_case: CreateUserUseCase 
 ):
