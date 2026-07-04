@@ -1,6 +1,5 @@
-from sqlalchemy import Column, String, Boolean, DateTime, Enum
-from .database import Base
-import datetime
+from sqlalchemy import Column, String, Boolean, Enum
+from infrastructure.database import Base
 
 class Usuario(Base):
     __tablename__ = "Usuario"
