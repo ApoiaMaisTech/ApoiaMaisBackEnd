@@ -3,12 +3,8 @@ from fastapi import APIRouter
 # importacao dos basemodels, enums e use cases
 from app.application.dto.create_user_request import(CreateUserRequest)
 from domain.enums.user import UserRole
-from application.use_cases.users.create_user_usecase import CreateUserUseCase
-from application.use_cases.users.update_user_usecase import UpdateUserUseCase
-from application.use_cases.users.get_user_usecase import GetUserUseCase
-from application.use_cases.users.delete_user_usecase import DeleteUserUseCase
+from application.use_cases.users  import CreateUserUseCase, GetUserUseCase, UpdateUserUseCase, DeleteUserUseCase
 from application.dto.update_user_request import UpdateUserRequest
-
 router = APIRouter(prefix="/users", tags=["Users"])
 
 # rotas de criacao de paciente
@@ -62,3 +58,4 @@ async def delete_user(
     use_case: DeleteUserUseCase,
 ):
     await use_case.execute(user_id)
+
