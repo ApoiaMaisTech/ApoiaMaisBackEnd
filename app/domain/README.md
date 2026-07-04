@@ -68,7 +68,7 @@ class UnauthorizedException(ApoiaMaisException):
 | `InvalidUserDataException`    | 422    | Dados do usuário com formato inválido       |
 
 ### Relatórios
-
+>
 | Exceção                       | Status | Descrição                                   |
 |-------------------------------|--------|---------------------------------------------|
 | `ReportNotFoundException`     | 404    | Relatório não encontrado pelo ID            |
