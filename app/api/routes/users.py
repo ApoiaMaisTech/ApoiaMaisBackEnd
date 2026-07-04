@@ -5,6 +5,7 @@ from app.application.dto.create_user_request import(CreateUserRequest)
 from domain.enums.user import UserRole
 from application.use_cases.users  import CreateUserUseCase, GetUserUseCase, UpdateUserUseCase, DeleteUserUseCase
 from application.dto.update_user_request import UpdateUserRequest
+
 router = APIRouter(prefix="/users", tags=["Users"])
 
 # rotas de criacao de paciente
