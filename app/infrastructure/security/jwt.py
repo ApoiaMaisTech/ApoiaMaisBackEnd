@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
+from pydantic import EmailStr
 
 from app.domain.enums.user import UserRole
 
@@ -10,6 +11,7 @@ class JwtService(ABC):
     def generate_token(
         self,
         user_id: UUID,
+        user_email: EmailStr,
         role: UserRole,
     ) -> str:
         pass
