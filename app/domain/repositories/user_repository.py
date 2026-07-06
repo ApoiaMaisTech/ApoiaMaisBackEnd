@@ -1,6 +1,6 @@
 # lib q permite criar classes abstratas
 from abc import ABC, abstractmethod
-from domain.entities.user import User
+from app.domain.entities.user import User
 class UserRepository(ABC):
 
     # metodos de manipulacao de dados dos usuarios
