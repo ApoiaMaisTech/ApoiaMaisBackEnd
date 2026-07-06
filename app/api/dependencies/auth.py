@@ -6,8 +6,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 from domain.exceptions.invalid_credentials import InvalidCredentialsException
 
-from api.dependencies  import get_jwt_service
-from api.dependencies  import get_user_repository
+from api.dependencies.services  import get_jwt_service
+from api.dependencies.repositories  import get_user_repository
 
 from infrastructure.security.jwt import JWTService
 from infrastructure.database.repositories.sql_user_repository import SqlUserRepository
