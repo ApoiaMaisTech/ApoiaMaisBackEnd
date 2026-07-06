@@ -1,6 +1,6 @@
-from domain.entities.user import User
-from domain.repositories.user_repository import UserRepository
-from application.dto.create_user_response import UserResponse
+from app.domain.entities.user import User
+from app.domain.repositories.user_repository import UserRepository
+from app.application.dto.create_user_response import UserResponse
 
 class ListUserUseCase:
 

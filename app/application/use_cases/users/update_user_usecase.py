@@ -1,9 +1,9 @@
-from application.dto.update_user_request import UpdateUserRequest
-from domain.repositories.user_repository import UserRepository
-from application.dto.create_user_response import UserResponse
-from domain.exceptions import UserNotFoundException
-from domain.exceptions import EmailAlreadyExistsException
-from infrastructure.security.password import PasswordService
+from app.application.dto.update_user_request import UpdateUserRequest
+from app.domain.repositories.user_repository import UserRepository
+from app.application.dto.create_user_response import UserResponse
+from app.domain.exceptions.user_not_found import UserNotFoundException
+from app.domain.exceptions.email_already_exists import EmailAlreadyExistsException
+from app.domain.services.password_service import PasswordService
 
 
 from uuid import UUID
