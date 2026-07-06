@@ -1,6 +1,6 @@
 
 ### DEPENDENCIAS DE USE CASES CRUD DE USUARIO ###   
-from api.dependencies import get_user_repository, get_password_service, get_jwt_service
+from api.dependencies.use_cases import get_user_repository, get_password_service, get_jwt_service
 
 from application.use_cases.users.create_user_usecase import CreateUserUseCase
 def get_create_user_usecase() -> CreateUserUseCase:
