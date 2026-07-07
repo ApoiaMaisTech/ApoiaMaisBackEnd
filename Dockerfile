@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # O código do seu app será montado via volume no docker-compose, 
 # mas copiamos por garantia para ambientes de produção
-COPY ./app /app
+COPY . /app
 
 # Comando para rodar o FastAPI apontando para o main.py dentro da pasta app
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
