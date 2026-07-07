@@ -1,13 +1,13 @@
 # importacao do enum q contem os cargos e do dto
-from application.dto.create_user_request import CreateUserRequest
-from domain.enums.user import UserRole
+from app.application.dto.create_user_request import CreateUserRequest
+from app.domain.enums.user import UserRole
 
 # importacao de excecoes e servicos
-from domain.exceptions.email_already_exists import EmailAlreadyExistsException
-from domain.entities.user import User
-from domain.repositories.user_repository import UserRepository
-from infrastructure.security.password import PasswordService
-from application.dto.create_user_response import UserResponse
+from app.domain.exceptions.email_already_exists import EmailAlreadyExistsException
+from app.domain.entities.user import User
+from app.domain.repositories.user_repository import UserRepository
+from app.domain.services.password_service import PasswordService
+from app.application.dto.create_user_response import UserResponse
 
 # construtor do use case de criacao de usuario, recebe o repositorio e o servico de senha como parametros
 class CreateUserUseCase:

@@ -1,5 +1,5 @@
 from uuid import UUID
-from domain.enums.user import UserRole
+from app.domain.enums.user import UserRole
 
 # objeto para regra de negocios
 class User:
