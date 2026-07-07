@@ -1,5 +1,5 @@
-from domain.repositories.user_repository import UserRepository
-from domain.exceptions.user_not_found import UserNotFoundException
+from app.domain.repositories.user_repository import UserRepository
+from app.domain.exceptions.user_not_found import UserNotFoundException
 
 
 class DeleteUserUseCase:
