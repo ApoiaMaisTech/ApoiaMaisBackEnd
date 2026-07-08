@@ -20,23 +20,29 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+
     restart: always
+
     ports:
       - "8000:8000"
+
     volumes:
-      - ./app:/app
-    # O comando abaixo força o contêiner a rodar o main correto, ignorando o cache do Dockerfile
+      - .:/app
+
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
     environment:
       DB_HOST: "mysql"
       DB_PORT: "3306"
       DB_USER: "${DB_USER}"
       DB_PASSWORD: "${DB_PASSWORD}"
       DB_NAME: "ApoiaMaisDB"
+
     depends_on:
       - mysql
       - rabbitmq
       - redis
+
     networks:
       - apoiamais-net
 
