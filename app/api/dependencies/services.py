@@ -1,4 +1,4 @@
-### DEPENDENCIAS DA API PARA SERVICOS DE SEGURANCA (JWT E PASSWORD) ###
+# DEPENDENCIAS DA API PARA SERVICOS DE SEGURANCA (JWT E PASSWORD) 
 from app.core.config import settings
 from app.domain.services.password_service import PasswordService
 from app.domain.services.jwt_service import JwtService

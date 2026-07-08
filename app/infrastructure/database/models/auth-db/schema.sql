@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS Usuario (
     email VARCHAR(255) UNIQUE NOT NULL,
     senha_hash VARCHAR(255) NOT NULL,
     nome VARCHAR(255) NOT NULL,
-    cargo ENUM('professor', 'medico', 'administrador') NOT NULL DEFAULT 'professor',
+    cargo_enum ENUM('teacher', 'medico', 'administrador', 'student') NOT NULL DEFAULT 'teacher',
     esta_ativo BOOLEAN NOT NULL DEFAULT TRUE,
     ultimo_login DATETIME(3),
     criado_em DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
