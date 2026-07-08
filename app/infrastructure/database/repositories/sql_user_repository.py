@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.repositories.user_repository import UserRepository
-from app.domain.entities.user import User  # IMPORTANTE: Importar a entidade de domínio
+from app.domain.entities.user import User  
 from app.infrastructure.database.models import Usuario
 
 
