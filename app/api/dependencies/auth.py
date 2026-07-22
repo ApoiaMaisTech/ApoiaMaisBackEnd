@@ -30,10 +30,10 @@ async def get_current_user(
 ### DEPENDENCIA DE OBTENCAO DO USUARIO ATUAL POR TIPO, PROFESSOR E ESTUDANTE ###
 from fastapi import Depends, HTTPException, status
 from app.domain.enums.user import UserRole
-from app.infrastructure.database.models import Usuario
+from app.infrastructure.database.models.auth.user_model import UserModel
 
 async def get_current_teacher(
-        current_user: Usuario = Depends(get_current_user)
+        current_user: UserModel= Depends(get_current_user)
 ):
     if current_user.cargo != UserRole.TEACHER:
         raise HTTPException(
@@ -43,7 +43,7 @@ async def get_current_teacher(
     return current_user
 
 async def get_current_student(
-        current_user: Usuario = Depends(get_current_user)
+        current_user: UserModel = Depends(get_current_user)
 ):
     if current_user.cargo != UserRole.STUDENT:
         raise HTTPException(

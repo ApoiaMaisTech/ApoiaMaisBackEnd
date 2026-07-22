@@ -3,11 +3,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.db
-    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
       MYSQL_DATABASE: "ApoiaMaisDB"
-      MYSQL_USER: "${DB_USER}"
+      MYSQL_USER: app
       MYSQL_PASSWORD: "${DB_PASSWORD}"
     ports:
       - "3306:3306"
@@ -17,6 +16,8 @@ services:
       - apoiamais-net
 
   auth-service:
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: Dockerfile
@@ -24,7 +25,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/app
+      - .:/app
     # O comando abaixo força o contêiner a rodar o main correto, ignorando o cache do Dockerfile
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     environment:
