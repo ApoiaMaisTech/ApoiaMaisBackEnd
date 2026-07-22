@@ -1,4 +1,4 @@
-### DEPENDENCIAS DA API PARA O BANCO DE DADOS ###
+# DEPENDENCIAS DA API PARA O BANCO DE DADOS 
 from app.infrastructure.database.session import AsyncSessionLocal
 async def get_db_session():
     async with AsyncSessionLocal() as session:
