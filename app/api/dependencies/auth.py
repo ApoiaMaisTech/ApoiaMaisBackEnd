@@ -31,6 +31,7 @@ router = APIRouter()
 async def create_student(
     request: CreateUserRequest,
     use_case: CreateUserUseCase = Depends(get_create_user_usecase)
+
 ):
     try:
         return await use_case.execute(
@@ -43,12 +44,12 @@ async def create_student(
             detail="E-mail já cadastrado."
         )
 
-
 # rota de criacao de professor
 @router.post("/teachers", status_code=status.HTTP_201_CREATED)
 async def create_teacher(
     request: CreateUserRequest,
     use_case: CreateUserUseCase = Depends(get_create_user_usecase)
+
 ):
     try:
         return await use_case.execute(
