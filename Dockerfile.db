@@ -1,9 +1,2 @@
 FROM mysql:8.0
 
-# fuso horário padrão do banco
-ENV TZ=America/Recife
-
-# arquivos SQL do MySQL
-COPY ./app/infrastructure/database/models/auth-db/schema.sql /docker-entrypoint-initdb.d/1_auth_schema.sql
-COPY ./app/infrastructure/database/models/auth-db/indexes.sql /docker-entrypoint-initdb.d/2_auth_indexes.sql
-COPY ./app/infrastructure/database/models/auth-db/seeds.sql   /docker-entrypoint-initdb.d/3_auth_seeds.sql
