@@ -14,13 +14,7 @@ class JwtServiceImpl:
         self.algorithm = algorithm
         self.expiration_minutes = expiration_minutes
 
-    def generate_token(
-        self,
-        user_id: UUID,
-        user_email: EmailStr,
-        role: UserRole,
-    ) -> str:
-        
+    def generate_token(self, user_id: UUID, user_email: EmailStr, role: UserRole) -> str:
         payload = {
             "user_id": str(user_id),
             "user_email": str(user_email),
@@ -31,5 +25,3 @@ class JwtServiceImpl:
 
     def verify_token(self, token: str) -> dict:
         return jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
-
-
