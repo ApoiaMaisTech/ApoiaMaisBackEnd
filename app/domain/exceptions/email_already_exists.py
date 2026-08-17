@@ -1,3 +1,4 @@
-class EmailAlreadyExistsException(Exception):
+from .base import DomainException
+class EmailAlreadyExistsException(DomainException):
     pass
 

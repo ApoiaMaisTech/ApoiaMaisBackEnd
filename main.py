@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.users import router as users_router
 from app.api.routes.auth import router as auth_router
+from app.api.exception_handlers import register_exception_handlers
 
 
 
@@ -10,6 +11,8 @@ app = FastAPI(
     title="ApoiaMais API",
     version="1.0.0"
 )
+
+register_exception_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,
