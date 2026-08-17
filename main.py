@@ -15,6 +15,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -22,8 +25,8 @@ app.add_middleware(
 )
 
 
-app.include_router(users_router,prefix="/users", tags=["Users"])
-app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(users_router, prefix="/api/users", tags=["Users"])
+app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 
 @app.get("/")
 def read_root():
@@ -32,4 +35,3 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "database": "connected"}
-

@@ -1,129 +1,57 @@
-from fastapi import APIRouter, HTTPException, status
-from fastapi import Depends
-from uuid import UUID
+﻿from uuid import UUID
 
-# importacao dos basemodels e enums
-from app.application.dto.create_user_request import CreateUserRequest
-from app.application.dto.update_user_request import UpdateUserRequest
+import jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from app.domain.enums.user import UserRole
-from app.application.dto.create_user_response import UserResponse
+from app.infrastructure.security.jwt import JwtServiceImpl
 
-# importacao de use cases
-from app.application.use_cases.users.create_user_usecase import CreateUserUseCase
-from app.application.use_cases.users.get_user_usecase import GetUserUseCase
-from app.application.use_cases.users.list_user_usecase import ListUserUseCase
-from app.application.use_cases.users.update_user_usecase import UpdateUserUseCase
-from app.application.use_cases.users.delete_user_usecase import DeleteUserUseCase
-
-# importacao de dependencias
-from app.api.dependencies.use_cases import get_create_user_usecase, get_get_user_usecase, get_list_user_usecase, get_update_user_usecase, get_delete_user_usecase
-from app.api.dependencies.auth import get_current_teacher
-
-# importacao de excecoes de dominio
-from app.domain.exceptions.email_already_exists import EmailAlreadyExistsException
-from app.domain.exceptions.user_not_found import UserNotFoundException
-
-router = APIRouter()
+security = HTTPBearer()
 
 
-# rotas de criacao de estudante
-@router.post("/students", status_code=status.HTTP_201_CREATED)
-async def create_student(
-    request: CreateUserRequest,
-    use_case: CreateUserUseCase = Depends(get_create_user_usecase)
+def get_jwt_service() -> JwtServiceImpl:
+    return JwtServiceImpl()
 
-):
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    jwt_service: JwtServiceImpl = Depends(get_jwt_service),
+) -> dict:
+    token = credentials.credentials
     try:
-        return await use_case.execute(
-            request=request,
-            role=UserRole.STUDENT,
-        )
-    except EmailAlreadyExistsException:
+        payload = jwt_service.verify_token(token)
+    except jwt.ExpiredSignatureError:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="E-mail já cadastrado."
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expirado.",
         )
-
-# rota de criacao de professor
-@router.post("/teachers", status_code=status.HTTP_201_CREATED)
-async def create_teacher(
-    request: CreateUserRequest,
-    use_case: CreateUserUseCase = Depends(get_create_user_usecase)
-
-):
-    try:
-        return await use_case.execute(
-            request=request,
-            role=UserRole.TEACHER,
-        )
-    except EmailAlreadyExistsException:
+    except jwt.InvalidTokenError:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="E-mail já cadastrado."
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido.",
         )
 
-
-# lista usuarios, utilizada só por qm tenha permissao
-@router.get("/", response_model=list[UserResponse])
-async def list_users(
-    current_teacher = Depends(get_current_teacher),
-    use_case: ListUserUseCase = Depends(get_list_user_usecase),
-):
-    return await use_case.execute()
+    return {
+        "id": UUID(payload["user_id"]),
+        "email": payload["user_email"],
+        "role": payload["role"],
+    }
 
 
-# Buscar usuário por ID
-@router.get("/{user_id}")
-async def get_user(
-    user_id: UUID,
-    current_teacher = Depends(get_current_teacher),
-    use_case: GetUserUseCase = Depends(get_get_user_usecase)
-):
-    try:
-        return await use_case.execute(user_id)
-    except UserNotFoundException:
+def get_current_teacher(current_user: dict = Depends(get_current_user)) -> dict:
+    if current_user["role"] != UserRole.TEACHER.value:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado."
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso permitido apenas para professores.",
         )
+    return current_user
 
 
-# Atualizar usuário
-@router.put("/{user_id}")
-async def update_user(
-    user_id: UUID,
-    request: UpdateUserRequest,
-    current_teacher = Depends(get_current_teacher),
-    use_case: UpdateUserUseCase = Depends(get_update_user_usecase)
-):
-    try:
-        return await use_case.execute(
-            user_id=user_id,
-            request=request,
-        )
-    except UserNotFoundException:
+def get_current_student(current_user: dict = Depends(get_current_user)) -> dict:
+    if current_user["role"] != UserRole.STUDENT.value:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado."
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso permitido apenas para alunos.",
         )
-    except EmailAlreadyExistsException:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="E-mail já cadastrado."
-        )
-
-
-# Deletar usuário
-@router.delete("/{user_id}", status_code=204)
-async def delete_user(
-    user_id: UUID,
-    current_teacher = Depends(get_current_teacher),
-    use_case: DeleteUserUseCase = Depends(get_delete_user_usecase)
-):
-    try:
-        await use_case.execute(user_id)
-    except UserNotFoundException:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado."
-        )
+    return current_user
