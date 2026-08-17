@@ -1,8 +1,7 @@
-from app.application.dto.login_request import LoginRequest
+﻿from app.application.dto.login_request import LoginRequest
 from app.application.dto.token_response import TokenResponse
 
 from app.api.dependencies.use_cases import get_login_usecase
-from app.api.dependencies.auth import get_current_teacher
 from app.application.use_cases.auth.login_usecase import LoginUseCase
 
 from app.domain.exceptions.user_not_found import UserNotFoundException
@@ -21,12 +20,9 @@ async def login(
 ):
     try:
         return await use_case.execute(request)
-    
+
     except UserNotFoundException:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     except InvalidCredentialsException:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-
-
