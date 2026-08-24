@@ -1,2 +1,3 @@
-class InvalidCredentialsException(Exception):
+from .base import DomainException
+class InvalidCredentialsException(DomainException):
     pass

@@ -73,8 +73,8 @@ def upgrade() -> None:
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('user_id', sa.String(length=36), nullable=False),
     sa.Column('service', sa.String(length=100), nullable=False),
-    sa.Column('message', sa.Text(), nullable=False),
-    sa.Column('stack_trace', sa.Text(), nullable=True),
+    sa.Column('message', sa.String(), nullable=False),
+    sa.Column('stack_trace', sa.String(), nullable=True),
     sa.Column('level', sa.Enum('INFO', 'WARNING', 'ERROR', 'CRITICAL', name='loglevel'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -93,7 +93,7 @@ def upgrade() -> None:
     sa.Column('old_data', sa.JSON(), nullable=True),
     sa.Column('new_data', sa.JSON(), nullable=True),
     sa.Column('ip', sa.String(length=45), nullable=True),
-    sa.Column('user_agent', sa.String(length=255), nullable=True),
+    sa.Column('user_agent', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id')
@@ -137,7 +137,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_store_item_type'), 'store_item', ['type'], unique=False)
     op.create_index(op.f('ix_store_item_updated_at'), 'store_item', ['updated_at'], unique=False)
     op.create_table('user',
-    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('id', sa.Uuid(), autoincrement=True, nullable=False),
     sa.Column('email', sa.String(length=255), nullable=False),
     sa.Column('password_hash', sa.String(length=255), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
@@ -231,7 +231,7 @@ def upgrade() -> None:
     op.create_table('patient_achievement',
     sa.Column('patient_id', sa.Uuid(), nullable=False),
     sa.Column('achievement_id', sa.Uuid(), nullable=False),
-    sa.Column('achieved_at', mysql.DATETIME(fsp=3), server_default=sa.text('now(3)'), nullable=False),
+    sa.Column('achieved_at', mysql.DATETIME(fsp=3), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['achievement_id'], ['achievement.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['patient_id'], ['patient.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('patient_id', 'achievement_id')
@@ -239,11 +239,11 @@ def upgrade() -> None:
     op.create_index(op.f('ix_patient_achievement_achievement_id'), 'patient_achievement', ['achievement_id'], unique=False)
     op.create_index(op.f('ix_patient_achievement_patient_id'), 'patient_achievement', ['patient_id'], unique=False)
     op.create_table('patient_clinical',
-    sa.Column('patient_id', sa.String(length=36), nullable=False),
+    sa.Column('patient_id', sa.String(length=36), nullable=True),
     sa.Column('clinical_rate', sa.Text(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['patient_id'], ['patient.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['patient_id'], ['patient.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('patient_id')
     )
     op.create_index(op.f('ix_patient_clinical_created_at'), 'patient_clinical', ['created_at'], unique=False)
