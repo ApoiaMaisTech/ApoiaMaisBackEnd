@@ -81,6 +81,3 @@ Toda a documentação do projeto está localizada no diretório `docs/`.
 ```text
 docs/
 └── images/
-```
-
-O diretório contém imagens, diagramas e demais arquivos utilizados na documentação do projeto e no README.
