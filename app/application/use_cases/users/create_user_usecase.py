@@ -14,7 +14,11 @@ class CreateUserUseCase:
         self.repository = repository
         self.password_service = password_service
 
-    async def execute(self,request: CreateUserRequest):
+    async def execute(
+    self,
+    request: CreateUserRequest,
+    role: UserRole,
+):
 
         # verifica se o email ja existe no repositorio, caso exista, levanta a excecao
         existing_user = await self.repository.get_by_email(request.email)
@@ -30,7 +34,7 @@ class CreateUserUseCase:
             name=request.name,
             email=request.email,
             password_hash=password_hash,
-            role=UserRole.STUDENT
+            role=role
         )
 
         # salva o usuario no repositorio e retorna a resposta com os dados do usuario criado
