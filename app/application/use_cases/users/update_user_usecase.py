@@ -20,12 +20,12 @@ class UpdateUserUseCase:
         # obtem o usuario pelo id, caso nao exista, levanta a excecao UserNotFoundException
         user = await self.repository.get_by_id(user_id)
         if not user:
-            raise UserNotFoundException()
+            raise UserNotFoundException("User not found")
         
         # verifica se o email ja existe no banco de dados
         existing_user = await self.repository.get_by_email(request.email)
         if existing_user and existing_user.id != user_id:
-            raise EmailAlreadyExistsException()
+            raise EmailAlreadyExistsException("Email already exists")
         
         # atualiza o usuario com os novos dados
         user.email = request.email
