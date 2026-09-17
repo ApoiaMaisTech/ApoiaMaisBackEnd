@@ -6,7 +6,7 @@ from app.domain.enums.user import UserRole
 from app.domain.exceptions.email_already_exists import EmailAlreadyExistsException
 from app.domain.repositories.user_repository import UserRepository
 from app.domain.services.password_service import PasswordService
-from infrastructure.database.mappers.user_mapper import _to_model, _to_entity
+from app.infrastructure.database.mappers.user_mapper import _to_model, _to_entity
 
 # construtor do use case de criacao de usuario, recebe o repositorio e o servico de senha como parametros
 class CreateUserUseCase:
