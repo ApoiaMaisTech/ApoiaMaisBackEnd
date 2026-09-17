@@ -14,6 +14,30 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: ApoiaMaisDB
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u test -ptest"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: test
+      DB_PASSWORD: test
+      DB_NAME: ApoiaMaisDB
+      JWT_SECRET_KEY: test-secret-key-for-ci
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
