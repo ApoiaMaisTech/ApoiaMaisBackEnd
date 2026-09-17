@@ -4,10 +4,9 @@ from app.domain.enums.user import UserRole
 
 # importacao de excecoes e servicos
 from app.domain.exceptions.email_already_exists import EmailAlreadyExistsException
-from app.domain.entities.user import User
 from app.domain.repositories.user_repository import UserRepository
 from app.domain.services.password_service import PasswordService
-from app.application.dto.create_user_response import UserResponse
+from infrastructure.database.mappers.user_mapper import _to_model, _to_entity
 
 # construtor do use case de criacao de usuario, recebe o repositorio e o servico de senha como parametros
 class CreateUserUseCase:
@@ -26,7 +25,7 @@ class CreateUserUseCase:
         password_hash = self.password_service.hash(request.password)
 
         # cria o usuario com os dados do request e o hash da senha
-        user = User(
+        user = _to_entity(
             id=None,
             name=request.name,
             email=request.email,
@@ -36,7 +35,7 @@ class CreateUserUseCase:
 
         # salva o usuario no repositorio e retorna a resposta com os dados do usuario criado
         created_user = await self.repository.create(user)
-        return UserResponse(
+        return _to_model(
             id=created_user.id,
             name=created_user.name,
             email=created_user.email,
