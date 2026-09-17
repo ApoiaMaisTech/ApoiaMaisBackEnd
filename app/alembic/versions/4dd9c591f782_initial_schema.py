@@ -27,8 +27,8 @@ def upgrade() -> None:
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('icon_url', sa.String(length=255), nullable=True),
     sa.Column('xp_bonus', sa.Integer(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_achievement_created_at'), 'achievement', ['created_at'], unique=False)
@@ -45,8 +45,8 @@ def upgrade() -> None:
     sa.Column('category', sa.Enum('AVATAR', 'AI_MEDIA', 'ITEM_IMAGE', 'ACHIEVEMENT_ICON', 'OTHER', name='filecategory'), nullable=False),
     sa.Column('size_bytes', sa.BigInteger(), nullable=False),
     sa.Column('url', sa.Text(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_files_category'), 'files', ['category'], unique=False)
@@ -61,8 +61,8 @@ def upgrade() -> None:
     sa.Column('parentage', sa.String(length=50), nullable=False),
     sa.Column('phone', sa.String(length=20), nullable=False),
     sa.Column('email', sa.String(length=255), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_guardian_created_at'), 'guardian', ['created_at'], unique=False)
@@ -73,11 +73,11 @@ def upgrade() -> None:
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('user_id', sa.String(length=36), nullable=False),
     sa.Column('service', sa.String(length=100), nullable=False),
-    sa.Column('message', sa.String(), nullable=False),
-    sa.Column('stack_trace', sa.String(), nullable=True),
+    sa.Column('message', sa.String(255), nullable=False),
+    sa.Column('stack_trace', sa.String(255), nullable=True),
     sa.Column('level', sa.Enum('INFO', 'WARNING', 'ERROR', 'CRITICAL', name='loglevel'), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_log_error_created_at'), 'log_error', ['created_at'], unique=False)
@@ -93,9 +93,9 @@ def upgrade() -> None:
     sa.Column('old_data', sa.JSON(), nullable=True),
     sa.Column('new_data', sa.JSON(), nullable=True),
     sa.Column('ip', sa.String(length=45), nullable=True),
-    sa.Column('user_agent', sa.String(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('user_agent', sa.String(255), nullable=True),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_login_acao_action'), 'login_acao', ['action'], unique=False)
@@ -111,8 +111,8 @@ def upgrade() -> None:
     sa.Column('message', sa.Text(), nullable=False),
     sa.Column('read', sa.Boolean(), nullable=False),
     sa.Column('read_at', mysql.DATETIME(fsp=3), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_notification_created_at'), 'notification', ['created_at'], unique=False)
@@ -127,8 +127,8 @@ def upgrade() -> None:
     sa.Column('type', sa.Enum('AVATAR', 'BACKGROUND', 'ACCESSORY', name='storeitemtype'), nullable=False),
     sa.Column('price', sa.Integer(), nullable=False),
     sa.Column('image_url', sa.String(length=255), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_store_item_created_at'), 'store_item', ['created_at'], unique=False)
@@ -137,14 +137,14 @@ def upgrade() -> None:
     op.create_index(op.f('ix_store_item_type'), 'store_item', ['type'], unique=False)
     op.create_index(op.f('ix_store_item_updated_at'), 'store_item', ['updated_at'], unique=False)
     op.create_table('user',
-    sa.Column('id', sa.Uuid(), autoincrement=True, nullable=False),
+    sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('email', sa.String(length=255), nullable=False),
     sa.Column('password_hash', sa.String(length=255), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('role', sa.Enum('STUDENT', 'TEACHER', name='userrole'), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_user_created_at'), 'user', ['created_at'], unique=False)
@@ -157,8 +157,8 @@ def upgrade() -> None:
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('order', sa.Integer(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_world_created_at'), 'world', ['created_at'], unique=False)
@@ -178,8 +178,8 @@ def upgrade() -> None:
     sa.Column('interest', sa.JSON(), nullable=True),
     sa.Column('current_happiness', sa.Enum('HAPPY', 'SAD', 'NEUTRAL', 'ANGRY', name='happiness'), nullable=False),
     sa.Column('url_avatar', sa.String(length=255), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.ForeignKeyConstraint(['guardian_id'], ['guardian.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -199,8 +199,8 @@ def upgrade() -> None:
     sa.Column('xp_reward', sa.Integer(), nullable=False),
     sa.Column('coin_reward', sa.Integer(), nullable=False),
     sa.Column('instructions', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.ForeignKeyConstraint(['world_id'], ['world.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -216,8 +216,8 @@ def upgrade() -> None:
     sa.Column('generated_text', sa.Text(), nullable=True),
     sa.Column('media_url', sa.Text(), nullable=True),
     sa.Column('prompt', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.ForeignKeyConstraint(['patient_id'], ['patient.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['stage_id'], ['stage.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
@@ -231,7 +231,7 @@ def upgrade() -> None:
     op.create_table('patient_achievement',
     sa.Column('patient_id', sa.Uuid(), nullable=False),
     sa.Column('achievement_id', sa.Uuid(), nullable=False),
-    sa.Column('achieved_at', mysql.DATETIME(fsp=3), server_default=sa.text('now()'), nullable=False),
+    sa.Column('achieved_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.ForeignKeyConstraint(['achievement_id'], ['achievement.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['patient_id'], ['patient.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('patient_id', 'achievement_id')
@@ -241,9 +241,9 @@ def upgrade() -> None:
     op.create_table('patient_clinical',
     sa.Column('patient_id', sa.String(length=36), nullable=True),
     sa.Column('clinical_rate', sa.Text(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['patient_id'], ['patient.id'], ondelete='SET NULL'),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.ForeignKeyConstraint(['patient_id'], ['patient.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('patient_id')
     )
     op.create_index(op.f('ix_patient_clinical_created_at'), 'patient_clinical', ['created_at'], unique=False)
@@ -270,8 +270,8 @@ def upgrade() -> None:
     sa.Column('is_completed', sa.Boolean(), nullable=False),
     sa.Column('attempts', sa.Integer(), nullable=False),
     sa.Column('last_played_at', mysql.DATETIME(fsp=3), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
+    sa.Column('updated_at', mysql.DATETIME(fsp=3), server_default=sa.text('CURRENT_TIMESTAMP(3)'), nullable=False),
     sa.ForeignKeyConstraint(['patient_id'], ['patient.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['stage_id'], ['stage.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),

@@ -55,3 +55,4 @@ uvloop==0.22.1
 watchfiles==1.2.0
 websockets==10.4
 python-dotenv==1.0.1
+pytest-asyncio==1.4.0

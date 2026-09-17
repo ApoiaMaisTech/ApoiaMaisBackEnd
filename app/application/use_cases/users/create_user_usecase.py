@@ -6,7 +6,7 @@ from app.domain.enums.user import UserRole
 from app.domain.exceptions.email_already_exists import EmailAlreadyExistsException
 from app.domain.repositories.user_repository import UserRepository
 from app.domain.services.password_service import PasswordService
-from infrastructure.database.mappers.user_mapper import _to_model, _to_entity
+from app.infrastructure.database.mappers.user_mapper import _to_model, _to_entity
 
 # construtor do use case de criacao de usuario, recebe o repositorio e o servico de senha como parametros
 class CreateUserUseCase:
@@ -14,7 +14,11 @@ class CreateUserUseCase:
         self.repository = repository
         self.password_service = password_service
 
-    async def execute(self,request: CreateUserRequest):
+    async def execute(
+    self,
+    request: CreateUserRequest,
+    role: UserRole,
+):
 
         # verifica se o email ja existe no repositorio, caso exista, levanta a excecao
         existing_user = await self.repository.get_by_email(request.email)
@@ -30,7 +34,7 @@ class CreateUserUseCase:
             name=request.name,
             email=request.email,
             password_hash=password_hash,
-            role=UserRole.STUDENT
+            role=role
         )
 
         # salva o usuario no repositorio e retorna a resposta com os dados do usuario criado

@@ -18,7 +18,7 @@ class LoginUseCase:
         # busca o usuario pelo email
         user = await self.user_repository.get_by_email(request.email)
         if not user:
-            raise UserNotFoundException()
+            raise UserNotFoundException("User not found")
 
         # verifica se a senha esta correta
         if not self.password_service.verify(request.password, user.password_hash):
