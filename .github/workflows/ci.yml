@@ -52,6 +52,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Run migrations
+        run: |
+          python -m alembic -c app/alembic.ini upgrade head
+
       - name: Run tests
         run: |
           pytest -v
