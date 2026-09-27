@@ -1,0 +1,15 @@
+{
+  "servicos": [
+    {
+      "nome": "auth-service",
+      "dir": ".",
+      "app": "main:app",
+      "docker": "auth-service",
+      "env": {
+        "DB_USER": "exportacao",
+        "DB_NAME": "exportacao",
+        "JWT_SECRET_KEY": "exportacao-openapi"
+      }
+    }
+  ]
+}
