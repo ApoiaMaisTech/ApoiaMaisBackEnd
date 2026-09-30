@@ -1,76 +1,88 @@
-# 📦 app/
+# app/
 
-O diretório `app/` é o núcleo da aplicação **ApoiaMais Backend**. Ele concentra toda a lógica de negócio, configurações, domínio e infraestrutura do sistema, seguindo os princípios da **Arquitetura Limpa (Clean Architecture)** e separação de responsabilidades.
+Código-fonte do backend do ApoiaMais. Hoje o backend é **uma única aplicação FastAPI** (chamada `auth-service` no `docker-compose.yml` e em `contratos.json`), organizada em camadas inspiradas em Clean Architecture. Não há API Gateway nem outros serviços implementados.
 
----
+O ponto de entrada fica fora desta pasta, em [`../main.py`](../main.py), que cria a instância `app` do FastAPI, registra os handlers de exceção, o CORS e os routers.
 
-## 🗂️ Estrutura
+## Estrutura
 
 ```text
 app/
-├── api/                        # Camada de interface HTTP (rotas e dependências)
-│   ├── routes/                 # Definição dos endpoints da aplicação
-│   ├── app.py                  # Inicialização e configuração do FastAPI
-│   └── dependencies.py         # Injeção de dependências globais
-│
-├── application/                # Camada de casos de uso (regras de aplicação)
-│   └── use_cases/
-│       ├── reports/            # Casos de uso relacionados a relatórios
-│       └── users/              # Casos de uso relacionados a usuários
-│
-├── core/                       # Configurações centrais da aplicação
-│   └── config.py               # Variáveis de ambiente e settings globais
-│
-├── domain/                     # Camada de domínio (entidades e exceções)
-│   └── exceptions.py           # Exceções customizadas do domínio
-│
-└── infrastructure/             # Camada de infraestrutura (banco de dados e segurança)
-    ├── database/               # Configuração e conexão com o banco de dados
-    ├── security/               # Autenticação, autorização e criptografia
-    └── main.py                 # Ponto de entrada da aplicação
+├── alembic/                  Migrations do banco (Alembic)
+├── alembic.ini               Configuração do Alembic
+├── api/                      Camada HTTP: routers, dependências (DI) e handlers de exceção
+├── application/              Casos de uso e DTOs (Pydantic)
+├── core/                     Configuração da aplicação (Pydantic Settings)
+├── domain/                   Entidades, enums, exceções e interfaces (repositórios e serviços)
+└── infrastructure/           SQLAlchemy (models, sessão, repositórios) e segurança (JWT, hash de senha)
 ```
 
----
+Cada pasta tem um README próprio com o detalhamento:
 
-## 🏛️ Arquitetura
+- [`api/README.md`](api/README.md)
+- [`application/README.md`](application/README.md)
+- [`core/README.md`](core/README.md)
+- [`domain/README.md`](domain/README.md)
+- [`infrastructure/README.md`](infrastructure/README.md)
+- [`alembic/README`](alembic/README)
 
-O módulo `app/` adota os princípios da **Clean Architecture**, dividindo responsabilidades em camadas independentes:
+## Camadas e dependências
 
 ```text
-┌─────────────────────────────────────┐
-│              api/                   │  ← Interface HTTP (Controllers, Routes)
-├─────────────────────────────────────┤
-│        application/use_cases/       │  ← Regras de Aplicação (Use Cases)
-├─────────────────────────────────────┤
-│             domain/                 │  ← Entidades e Regras de Negócio
-├─────────────────────────────────────┤
-│          infrastructure/            │  ← Banco de Dados, Segurança, I/O
-└─────────────────────────────────────┘
-│               core/                 │  ← Configurações Transversais
+            main.py
+               │
+               ▼
+┌──────────────────────────────┐
+│ api/                         │  routers, Depends(), exception handlers
+└──────┬───────────────┬───────┘
+       │               │ (dependencies/ instancia as implementações concretas)
+       ▼               ▼
+┌──────────────┐   ┌──────────────────────┐
+│ application/ │   │ infrastructure/      │  SQLAlchemy, JWT, PBKDF2
+└──────┬───────┘   └──────────┬───────────┘
+       │                      │ implementa as interfaces do domínio
+       ▼                      ▼
+┌──────────────────────────────┐
+│ domain/                      │  sem dependência de framework
+└──────────────────────────────┘
 ```
 
-> Cada camada depende apenas das camadas internas, nunca das externas — garantindo baixo acoplamento e alta coesão.
+| Camada            | Importa de                                   | Responsabilidade |
+|-------------------|----------------------------------------------|------------------|
+| `api/`            | `application/`, `domain/`, `infrastructure/`, `core/` | Receber a requisição, resolver dependências, chamar o caso de uso |
+| `application/`    | `domain/`                                    | Orquestrar regras de negócio e montar os DTOs de resposta |
+| `domain/`         | nenhuma camada interna                       | Entidades, enums, exceções e contratos (ABCs) |
+| `infrastructure/` | `domain/`                                    | Persistência e segurança |
+| `core/`           | nenhuma                                      | Leitura de variáveis de ambiente |
 
----
+A composição (qual implementação concreta atende cada interface) é feita em `api/dependencies/`, via `Depends` do FastAPI.
 
-## ▶️ Ponto de Entrada
+## Funcionalidades implementadas
 
-A aplicação é inicializada a partir de:
+| Domínio        | Estado |
+|----------------|--------|
+| Usuários (CRUD) | Implementado: casos de uso, repositório SQL e rotas em `/api/users` |
+| Autenticação   | Implementado: login com JWT em `/api/auth/login` |
+| Pacientes, responsáveis, dados clínicos | Somente models e tabelas; sem casos de uso nem rotas |
+| Gamificação (mundos, fases, progresso, conquistas, loja, inventário) | Somente models e tabelas |
+| Conteúdo gerado por IA | Somente model e tabela |
+| Arquivos, notificações, auditoria | Somente models e tabelas |
+| Relatórios     | Não implementado (arquivos vazios em `application/use_cases/reports/` e `api/routes/reports.py`) |
 
-```bash
-infrastructure/main.py
-```
+Redis e RabbitMQ são iniciados pelo `docker-compose.yml`, mas **nenhum código da aplicação os utiliza** até o momento.
 
-O arquivo `main.py` é responsável por iniciar o servidor **Uvicorn** e carregar as configurações da aplicação.
+## Fluxo de uma requisição
 
----
+Exemplo: `GET /api/users/` (listar usuários).
 
-## 🔗 Relacionamentos entre Camadas
+1. `main.py` direciona a chamada para o router de `api/routes/users.py`.
+2. O FastAPI resolve as dependências:
+   - `get_current_teacher` valida o token Bearer e exige a role `teacher`;
+   - `get_list_user_usecase` cria a sessão do banco, o `SqlUserRepository` e o `ListUserUseCase`.
+3. O caso de uso chama `repository.list()`, que devolve entidades `User` do domínio.
+4. O caso de uso converte as entidades em `UserResponse` (DTO) e a rota devolve o JSON.
+5. Se uma `DomainException` for lançada, o handler em `api/exception_handlers.py` converte em resposta HTTP.
 
-| Camada           | Depende de              | Responsabilidade                         |
-|------------------|-------------------------|------------------------------------------|
-| `api/`           | `application/`, `core/` | Receber requisições HTTP                 |
-| `application/`   | `domain/`               | Orquestrar casos de uso                  |
-| `domain/`        | *(nenhuma)*             | Regras de negócio puras                  |
-| `infrastructure/`| `domain/`, `core/`      | Persistência, segurança e integrações    |
-| `core/`          | *(nenhuma)*             | Configurações e variáveis de ambiente    |
+## Testes
+
+Os testes ficam em [`../tests/`](../tests/README.md), fora desta pasta.

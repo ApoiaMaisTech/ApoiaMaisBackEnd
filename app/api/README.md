@@ -1,77 +1,83 @@
-# 🌐 app/api/
+# app/api/
 
-A camada `api/` é a **interface HTTP** da aplicação. Ela é responsável por receber as requisições externas, aplicar validações iniciais, resolver dependências e delegar o processamento aos casos de uso correspondentes.
+Camada HTTP do backend. Recebe as requisições, valida o corpo com os DTOs Pydantic, resolve as dependências (sessão do banco, repositórios, serviços, usuário autenticado) e delega o processamento aos casos de uso.
 
----
+A instância do FastAPI **não** é criada aqui: ela fica em [`../../main.py`](../../main.py), que registra os handlers, o CORS e os routers desta pasta.
 
-## 🗂️ Estrutura
+## Estrutura
 
 ```text
 api/
-├── routes/             # Módulos de roteamento por domínio/recurso
-├── app.py              # Fábrica e configuração da instância FastAPI
-└── dependencies.py     # Provedores de dependências (DI Container)
+├── app.py                    Arquivo vazio (não utilizado)
+├── exception_handlers.py     Conversão de DomainException em resposta HTTP
+├── dependencies/
+│   ├── auth.py               Autenticação por token Bearer e checagem de role
+│   ├── repositories.py       Sessão assíncrona do banco e repositórios
+│   ├── services.py           Serviços de senha e JWT usados no login
+│   └── use_cases.py          Montagem dos casos de uso
+└── routes/
+    ├── auth.py               /api/auth
+    ├── users.py              /api/users
+    └── reports.py            Arquivo vazio (não registrado)
 ```
 
----
+## Registro dos routers (`main.py`)
 
-## 📄 Arquivos
+| Prefixo       | Router              | Tag     |
+|---------------|---------------------|---------|
+| `/api/users`  | `routes/users.py`   | `Users` |
+| `/api/auth`   | `routes/auth.py`    | `Auth`  |
 
-### `app.py`
-Responsável por instanciar e configurar a aplicação **FastAPI**:
-- Registro dos roteadores (`include_router`)
-- Configuração de middlewares (CORS, autenticação, logging)
-- Handlers globais de exceção
-- Configuração de metadados da API (título, versão, descrição)
+Além deles, `main.py` define `GET /` (mensagem simples) e `GET /health`. O `/health` devolve uma resposta fixa e não verifica o banco de dados.
 
-```python
-from fastapi import FastAPI
-from app.api.routes import users, reports
+A documentação interativa fica em `/docs` (Swagger UI) e `/redoc`, que o FastAPI gera automaticamente.
 
-app = FastAPI(title="ApoiaMais API", version="1.0.0")
+## Injeção de dependências
 
-app.include_router(users.router, prefix="/users", tags=["Users"])
-app.include_router(reports.router, prefix="/reports", tags=["Reports"])
+A cadeia de dependências de um caso de uso segue o padrão abaixo:
+
+```text
+get_db_session()                         repositories.py  -> AsyncSession por requisição
+   └── get_user_repository()             repositories.py  -> SqlUserRepository
+          └── get_<acao>_usecase()       use_cases.py     -> caso de uso pronto para a rota
+get_password_service()                   services.py      -> PasswordServiceImpl
+get_jwt_service()                        services.py      -> JwtServiceImpl (lê settings)
 ```
 
----
+A sessão é aberta com `async with AsyncSessionLocal()` e fechada ao fim da requisição. Os commits acontecem dentro do repositório (veja [`../infrastructure/database/README.md`](../infrastructure/database/README.md)).
 
-### `dependencies.py`
-Centraliza a **injeção de dependências** utilizando o sistema nativo do FastAPI (`Depends`):
-- Provedor de sessão de banco de dados
-- Extração e validação do token JWT
-- Injeção de repositórios e serviços nos endpoints
+## Autenticação e autorização (`dependencies/auth.py`)
 
-```python
-from fastapi import Depends
-from app.infrastructure.database import get_db
+| Dependência           | Comportamento |
+|-----------------------|---------------|
+| `get_current_user`    | Lê o header `Authorization: Bearer <token>`, valida a assinatura e a expiração e devolve um `dict` com `id`, `email` e `role`. Responde 401 para token expirado ou inválido. |
+| `get_current_teacher` | Exige `role == "teacher"`; caso contrário, responde 403. |
+| `get_current_student` | Exige `role == "student"`; caso contrário, responde 403. Não é usada por nenhuma rota no momento. |
 
-def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_db)):
-    ...
-```
+O token não é conferido contra o banco: um usuário removido continua com token válido até a expiração.
 
----
+Observação: `auth.py` define um `get_jwt_service` próprio, que instancia `JwtServiceImpl()` sem argumentos (a chave vem de `os.getenv("JWT_SECRET_KEY")`, com valor padrão). Já o login usa o `get_jwt_service` de `services.py`, que lê `settings`. As duas configurações precisam apontar para a mesma chave e o mesmo algoritmo.
 
-### `routes/`
-Contém os módulos de rotas organizados por recurso. Cada arquivo define um `APIRouter` com seus respectivos endpoints.
+## Tratamento de erros
 
-> 📂 Veja: [`routes/README.md`](./routes/README.md)
+Hoje coexistem três formatos de resposta de erro:
 
----
+| Origem | Status | Corpo |
+|--------|--------|-------|
+| `DomainException` (handler global em `exception_handlers.py`) | sempre 400 | `{"success": false, "message": "...", "errors": []}` |
+| `HTTPException` lançada na rota de login ou nas dependências de auth | 401, 403 ou 404 | `{"detail": "..."}` |
+| Validação do Pydantic (padrão do FastAPI) | 422 | `{"detail": [ ... ]}` |
 
-## 🔗 Dependências da Camada
+Exceções não tratadas (por exemplo, `IntegrityError` numa inserção concorrente de e-mail duplicado) resultam em 500.
 
-| Importa de            | Motivo                                      |
-|-----------------------|---------------------------------------------|
-| `application/use_cases/` | Execução dos casos de uso              |
-| `core/config.py`      | Acesso a configurações e variáveis globais  |
-| `domain/exceptions.py`| Tratamento de exceções de domínio           |
+## CORS
 
----
+Configurado em `main.py` com origens fixas de desenvolvimento (`localhost` e `127.0.0.1` nas portas 5173, 3000 e 3002), `allow_credentials=True` e todos os métodos e headers liberados. Ainda não é configurável por variável de ambiente.
 
-## 📐 Convenções
+## Regras da camada
 
-- Cada roteador deve estar em um arquivo separado dentro de `routes/`
-- Nenhuma lógica de negócio deve residir nesta camada
-- Toda validação de entrada deve ser feita via **Pydantic Schemas**
-- Respostas de erro devem seguir o padrão definido nos exception handlers globais
+- As rotas não contêm regra de negócio: recebem o DTO, chamam `use_case.execute(...)` e devolvem o resultado.
+- Toda implementação concreta (repositório, serviço) é obtida via `Depends`, nunca instanciada dentro da rota.
+- Um novo router deve ser registrado em `main.py` com prefixo `/api/<recurso>`.
+
+Detalhes de cada endpoint: [`routes/README.md`](routes/README.md).

@@ -1,66 +1,52 @@
-# ⚙️ app/application/use_cases/
+# app/application/use_cases/users/
 
-O diretório `use_cases/` contém a **camada de aplicação** do sistema. Aqui residem os **casos de uso** — classes responsáveis por orquestrar as regras de negócio, coordenar repositórios e retornar resultados para a camada de interface.
+Casos de uso do CRUD de usuários. Todos recebem as dependências pelo construtor e são montados em [`app/api/dependencies/use_cases.py`](../../../api/dependencies/use_cases.py).
 
-Esta camada é o coração da arquitetura, sendo completamente independente de frameworks, banco de dados e detalhes de infraestrutura.
+## Arquivos
 
----
+| Arquivo                   | Classe              | Estado |
+|---------------------------|---------------------|--------|
+| `create_user_usecase.py`  | `CreateUserUseCase` | Em uso |
+| `get_user_usecase.py`     | `GetUserUseCase`    | Em uso |
+| `list_user_usecase.py`    | `ListUserUseCase`   | Em uso |
+| `update_user_usecase.py`  | `UpdateUserUseCase` | Em uso |
+| `delete_user_usecase.py`  | `DeleteUserUseCase` | Em uso |
+| `delete_user.py`          | `DeleteUserUseCase` | Versão antiga duplicada, não referenciada |
 
-## 🗂️ Estrutura
+## Comportamento
 
-```text
-use_cases/
-├── reports/          # Casos de uso do domínio de relatórios
-└── users/            # Casos de uso do domínio de usuários
-```
+### CreateUserUseCase
 
----
+`execute(request: CreateUserRequest, role: UserRole) -> UserResponse`
 
-## 🏛️ Responsabilidade
+1. Consulta `get_by_email`; se o e-mail já existe, lança `EmailAlreadyExistsException`.
+2. Gera o hash da senha com `PasswordService.hash`.
+3. Cria a entidade `User` com a role recebida da rota (`STUDENT` ou `TEACHER`) e persiste com `repository.create`.
 
-Cada **Use Case** representa uma única ação de negócio e deve:
+A verificação de e-mail e a inserção não são atômicas. Em requisições simultâneas, a restrição `UNIQUE` do banco é quem impede a duplicidade, e o erro resultante não é tratado (retorna 500).
 
-1. Receber dados de entrada (DTOs ou Schemas)
-2. Aplicar as regras de negócio
-3. Interagir com repositórios ou serviços externos
-4. Retornar um resultado ou lançar uma exceção de domínio
+### GetUserUseCase
 
----
+`execute(user_id: UUID) -> UserResponse`. Lança `UserNotFoundException` se o usuário não existe.
 
-## 📐 Padrão de Implementação
+### ListUserUseCase
 
-```python
-from app.domain.exceptions import UserNotFoundException
+`execute() -> list[UserResponse]`. Retorna todos os usuários, sem paginação nem filtros.
 
-class GetUserByIdUseCase:
-    def __init__(self, user_repository: UserRepository):
-        self.user_repository = user_repository
+### UpdateUserUseCase
 
-    def execute(self, user_id: int):
-        user = self.user_repository.find_by_id(user_id)
-        if not user:
-            raise UserNotFoundException(user_id)
-        return user
-```
+`execute(user_id: UUID, request: UpdateUserRequest) -> UserResponse`
 
----
+1. Lança `UserNotFoundException` se o usuário não existe.
+2. Lança `EmailAlreadyExistsException` se o novo e-mail pertence a outro usuário.
+3. Substitui e-mail e hash de senha e persiste com `repository.update`.
 
-## 📋 Princípios desta Camada
+Não altera o nome nem a role, e não exige a senha atual.
 
-| Princípio                 | Descrição                                                                 |
-|---------------------------|---------------------------------------------------------------------------|
-| **Single Responsibility** | Um Use Case = Uma ação de negócio                                         |
-| **Independência**         | Sem importações de `api/` ou `infrastructure/` diretas                   |
-| **Testabilidade**         | Toda dependência deve ser injetada, facilitando mocks em testes unitários |
-| **Clareza**               | O nome do Use Case deve descrever exatamente o que ele faz               |
+### DeleteUserUseCase
 
----
+`execute(user_id) -> UserResponse`. Lança `UserNotFoundException` se o usuário não existe e remove o registro fisicamente. A rota responde 204 e descarta o retorno.
 
-## 📂 Subdiretórios
+## Testes
 
-| Diretório   | Descrição                                         |
-|-------------|---------------------------------------------------|
-| `reports/`  | Geração, listagem e exportação de relatórios      |
-| `users/`    | Criação, autenticação e gerenciamento de usuários |
-
-> 📂 Veja: [`reports/README.md`](./reports/README.md) · [`users/README.md`](./users/README.md)
+Cobertos por [`tests/unit/use_cases/users/test_user_usecases.py`](../../../../tests/unit/use_cases/users/test_user_usecases.py), com o repositório e o serviço de senha substituídos por mocks.

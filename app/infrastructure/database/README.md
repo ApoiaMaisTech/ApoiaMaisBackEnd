@@ -1,112 +1,96 @@
-# 🗄️ app/infrastructure/database/
+# app/infrastructure/database/
 
-O diretório `database/` é responsável por toda a configuração de **persistência de dados** da aplicação: conexão com o banco de dados, gerenciamento de sessões, definição de modelos ORM e implementação dos repositórios.
+Persistência com **SQLAlchemy 2.0 assíncrono** sobre **MySQL 8.0** (driver `aiomysql`). O schema é versionado pelo **Alembic** (veja [`../../alembic/README`](../../alembic/README)).
 
----
-
-## 🗂️ Estrutura
+## Estrutura
 
 ```text
 database/
-├── connection.py         # Engine e configuração da conexão com o banco
-├── session.py            # Gerenciamento de sessões SQLAlchemy
-├── base.py               # Classe base declarativa dos modelos ORM
-├── models/               # Modelos ORM mapeados para tabelas do banco
-│   ├── user_model.py
-│   └── report_model.py
-└── repositories/         # Implementação do padrão Repository
-    ├── user_repository.py
-    └── report_repository.py
+├── __init__.py              Reexporta Base
+├── base.py                  class Base(DeclarativeBase)
+├── mixins.py                TimestampMixin
+├── session.py               engine assíncrono e AsyncSessionLocal
+├── mappers/
+│   └── user_mapper.py       Não utilizado (a conversão está no repositório)
+├── models/
+│   ├── __init__.py          Importa todos os models
+│   ├── auth/                UserModel
+│   ├── audit/               AuditLogModel, AuditLogErrorModel
+│   ├── file/                FileModel
+│   ├── ludic/               World, Stage, Achievement, StoreItem, PatientProgress, PatientAchievement, AIContent
+│   ├── notification/        NotificationModel
+│   ├── patient/             Patient, Guardian, PatientClinical, PatientInventory
+│   └── auth-db/             Scripts SQL legados (não usados pelo Alembic)
+└── repositories/
+    └── sql_user_repository.py   SqlUserRepository
 ```
 
----
-
-## 📄 Arquivos Principais
-
-### `connection.py`
-Cria o **engine** do SQLAlchemy a partir da `DATABASE_URL` definida nas configurações:
+## Sessão (`session.py`)
 
 ```python
-from sqlalchemy import create_engine
-from app.core.config import settings
-
-engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
+engine = create_async_engine(DATABASE_URL, echo=True, poolclass=NullPool)
+AsyncSessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 ```
 
----
+- A URL vem da variável `DATABASE_URL` ou é montada a partir de `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` e `DB_NAME` (lidas com `os.getenv`, não com `settings`).
+- `NullPool`: cada requisição abre e fecha a própria conexão com o MySQL.
+- `echo=True`: todo SQL executado é registrado no log.
+- Uma sessão por requisição, criada em `app/api/dependencies/repositories.py`.
 
-### `session.py`
-Define o **SessionLocal** e a dependência `get_db` utilizada via `Depends` nas rotas:
+## Repositório `SqlUserRepository`
 
-```python
-from sqlalchemy.orm import sessionmaker
+Implementa `UserRepository`. Converte `UserModel` em entidade `User` (e vice-versa) com os métodos estáticos `_to_entity` e `_to_model`.
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+| Método         | Implementação |
+|----------------|---------------|
+| `create`       | `add` + `commit` + `refresh` |
+| `get_by_id`    | `session.get(UserModel, id)` |
+| `get_by_email` | `select ... where email = :email` |
+| `list`         | `select(UserModel)` sem paginação |
+| `update`       | `merge` de um model novo + `commit` + `refresh` (redefine `is_active` como `True`) |
+| `delete`       | `session.delete` + `commit` (sem erro se o id não existe) |
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-```
+Cada método de escrita faz o próprio `commit`. Não há Unit of Work: operações com mais de um passo não ficam na mesma transação.
 
----
+## Models e tabelas
 
-### `base.py`
-Classe base declarativa compartilhada por todos os modelos ORM:
+Todos os models (exceto as tabelas associativas) herdam `TimestampMixin`, que adiciona `created_at` e `updated_at` com índice. As chaves primárias são UUID (`sa.Uuid`, armazenado como `CHAR(32)` no MySQL).
 
-```python
-from sqlalchemy.orm import DeclarativeBase
+| Tabela                | Model                     | Relacionamentos (FK) |
+|-----------------------|---------------------------|----------------------|
+| `user`                | `UserModel`               | — |
+| `patient`             | `PatientModel`            | `guardian_id` -> `guardian.id` (SET NULL) |
+| `guardian`            | `GuardianModel`           | — |
+| `patient_clinical`    | `PatientClinicalModel`    | `patient_id` -> `patient.id` (CASCADE na migration) |
+| `patient_inventory`   | `PatientInventoryModel`   | `patient_id` -> `patient.id`, `item_id` -> `store_item.id` |
+| `world`               | `WorldModel`              | — (`order` único) |
+| `stage`               | `StageModel`              | `world_id` -> `world.id` |
+| `patient_progress`    | `PatientProgressModel`    | `patient_id` -> `patient.id`, `stage_id` -> `stage.id` (único por paciente e fase) |
+| `achievement`         | `AchievementModel`        | — |
+| `patient_achievement` | `PatientAchievementModel` | `patient_id` -> `patient.id`, `achievement_id` -> `achievement.id` |
+| `store_item`          | `StoreItemModel`          | — |
+| `ai_content`          | `AIContentModel`          | `patient_id` -> `patient.id`, `stage_id` -> `stage.id` (SET NULL) |
+| `files`               | `FileModel`               | Referência lógica `owner_id` + `owner_type`, sem FK |
+| `notification`        | `NotificationModel`       | Referência lógica `receiver_id`, sem FK |
+| `login_acao`          | `AuditLogModel`           | Referência lógica `user_id`, sem FK (log de auditoria) |
+| `log_error`           | `AuditLogErrorModel`      | Referência lógica `user_id`, sem FK |
 
-class Base(DeclarativeBase):
-    pass
-```
+Apenas a tabela `user` é usada pelo código da aplicação. As demais não têm repositório nem caso de uso.
 
----
+Pontos de atenção no modelo atual:
 
-## 🔧 Banco de Dados Suportado
+- Não existe vínculo entre `user` e `patient` (aluno ↔ paciente) nem entre professor e paciente.
+- `patient.guardian_id` e `patient_clinical.patient_id` são `String(36)`, enquanto as chaves referenciadas são `Uuid` (`CHAR(32)`).
+- Nenhum `relationship()` do SQLAlchemy está declarado.
+- A migration inicial foi ajustada manualmente e difere dos models em alguns pontos (tipos de data, `ondelete` de `patient_clinical`, tamanho de `message` e `stack_trace` em `log_error`). Revise o resultado de qualquer `--autogenerate`.
 
-| Banco de Dados | Driver             | Status      |
-|----------------|--------------------|-------------|
-| MySQL          | `pymysql`          | ✅ Produção  |
-| SQLite         | nativo             | ✅ Testes    |
-| PostgreSQL     | `psycopg2`         | 🔄 Opcional  |
+## Scripts SQL legados (`models/auth-db/`)
 
----
+`schema.sql`, `indexes.sql` e `seeds.sql` descrevem uma tabela `Usuario` com colunas em português, anterior ao Alembic. Não são executados pelo `docker-compose.yml` nem pelas migrations. O schema oficial é o gerado pelo Alembic.
 
-## 📐 Padrão Repository
+## Como adicionar uma tabela
 
-Todos os repositórios seguem o padrão **Repository Pattern**, encapsulando as operações de banco de dados:
-
-```python
-class UserRepository:
-    def __init__(self, db: Session):
-        self.db = db
-
-    def find_by_id(self, user_id: int) -> Optional[UserModel]:
-        return self.db.query(UserModel).filter(UserModel.id == user_id).first()
-
-    def save(self, user: UserModel) -> UserModel:
-        self.db.add(user)
-        self.db.commit()
-        self.db.refresh(user)
-        return user
-```
-
----
-
-## 🚀 Migrations
-
-As migrações de banco de dados são gerenciadas pelo **Alembic**:
-
-```bash
-# Gerar nova migration
-alembic revision --autogenerate -m "descricao"
-
-# Aplicar migrations
-alembic upgrade head
-
-# Reverter última migration
-alembic downgrade -1
-```
+1. Criar o model em `models/<dominio>/`, herdando `Base` e, quando fizer sentido, `TimestampMixin`.
+2. Importar o model em `models/__init__.py` e em `app/alembic/env.py`, para que o autogenerate o encontre.
+3. Gerar e revisar a migration (veja [`../../alembic/README`](../../alembic/README)).
+4. Criar a interface do repositório em `app/domain/repositories/` e a implementação em `repositories/`.

@@ -1,69 +1,48 @@
-# 🏗️ app/infrastructure/
+# app/infrastructure/
 
-O diretório `infrastructure/` contém a **camada de infraestrutura** da aplicação. É aqui que residem todos os detalhes técnicos externos: conexões com banco de dados, mecanismos de autenticação e segurança, integrações com serviços externos e o ponto de entrada do servidor.
+Camada de infraestrutura. Implementa as interfaces do domínio usando bibliotecas externas: **SQLAlchemy assíncrono** (MySQL via `aiomysql`) para persistência, **PyJWT** para tokens e `hashlib` (PBKDF2) para senhas.
 
-Esta camada é a única que conhece e depende de tecnologias específicas como **SQLAlchemy**, **JWT**, **Redis** e outras.
-
----
-
-## 🗂️ Estrutura
+## Estrutura
 
 ```text
 infrastructure/
-├── database/           # Configuração do banco de dados e repositórios
-├── security/           # Autenticação JWT e utilitários de segurança
-└── main.py             # Ponto de entrada da aplicação (Uvicorn)
+├── database/                  Persistência (veja database/README.md)
+│   ├── base.py                DeclarativeBase
+│   ├── mixins.py              TimestampMixin (created_at, updated_at)
+│   ├── session.py             Engine assíncrono e AsyncSessionLocal
+│   ├── mappers/               user_mapper.py (não utilizado)
+│   ├── models/                Models SQLAlchemy por domínio
+│   └── repositories/          SqlUserRepository
+└── security/                  Segurança (veja security/README.md)
+    ├── jwt.py                 JwtServiceImpl
+    └── password.py            PasswordServiceImpl
 ```
 
----
+Documentação detalhada:
 
-## 📄 Arquivo: `main.py`
+- [`database/README.md`](database/README.md)
+- [`security/README.md`](security/README.md)
 
-Ponto de entrada da aplicação. Responsável por inicializar o servidor **Uvicorn** com as configurações definidas em `core/config.py`.
+## Implementações das interfaces do domínio
 
-```python
-import uvicorn
-from app.core.config import settings
+| Interface (domínio) | Implementação                                   |
+|---------------------|-------------------------------------------------|
+| `UserRepository`    | `database/repositories/sql_user_repository.py`  |
+| `PasswordService`   | `security/password.py`                          |
+| `JwtService`        | `security/jwt.py` (sem herança formal da interface) |
 
-if __name__ == "__main__":
-    uvicorn.run(
-        "app.api.app:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=settings.DEBUG,
-    )
-```
+As implementações são instanciadas em `app/api/dependencies/`.
 
----
+## Serviços externos
 
-## 📂 Subdiretórios
+| Serviço  | Situação |
+|----------|----------|
+| MySQL 8.0 | Em uso, via SQLAlchemy assíncrono |
+| Redis    | Container sobe no `docker-compose.yml`; não há cliente no código |
+| RabbitMQ | Container sobe no `docker-compose.yml`; não há produtor nem consumidor no código |
 
-### `database/`
-Configuração de conexão, sessão e repositórios do banco de dados.
+## Regras da camada
 
-> 📂 Veja: [`database/README.md`](./database/README.md)
-
----
-
-### `security/`
-Utilitários de autenticação e autorização: geração/validação de tokens JWT e hashing de senhas.
-
-> 📂 Veja: [`security/README.md`](./security/README.md)
-
----
-
-## 🔗 Dependências da Camada
-
-| Importa de          | Motivo                                       |
-|---------------------|----------------------------------------------|
-| `core/config.py`    | Variáveis de ambiente e configurações        |
-| `domain/`           | Entidades de domínio para mapeamento ORM     |
-
----
-
-## 📋 Princípios desta Camada
-
-- ✅ Única camada com acesso a bibliotecas de terceiros (SQLAlchemy, JWT, etc.)
-- ✅ Repositórios devem implementar interfaces definidas no domínio
-- ❌ Nenhuma regra de negócio deve residir aqui
-- ❌ Não importe diretamente de `api/` ou `application/`
+- Não contém regra de negócio: converte entre o mundo externo e as entidades do domínio.
+- Não importa `app.api` nem `app.application`.
+- Toda nova integração externa deve implementar uma interface definida em `app/domain/`.
