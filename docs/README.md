@@ -1,44 +1,36 @@
-# 📚 docs/
+# docs/
 
-O diretório `docs/` centraliza toda a **documentação estática** do projeto **ApoiaMais Backend**, incluindo imagens, diagramas, fluxos e demais recursos visuais utilizados nos READMEs e na documentação técnica.
+Recursos estáticos usados na documentação do backend.
 
----
-
-## 🗂️ Estrutura
+## Conteúdo
 
 ```text
 docs/
-└── images/           # Imagens, GIFs e diagramas do projeto
-    └── demo.gif      # Demonstração visual da aplicação
+└── images/
+    └── demo.gif      Demonstração visual usada no README principal
 ```
 
----
+## Onde está a documentação técnica
 
-## 📂 Subdiretórios
+A documentação da arquitetura fica junto do código, em um README por pasta:
 
-### `images/`
-Armazena todos os recursos visuais utilizados na documentação:
+| Tema | Documento |
+|------|-----------|
+| Visão geral das camadas e funcionalidades | [`../app/README.md`](../app/README.md) |
+| Rotas, autenticação e tratamento de erros | [`../app/api/README.md`](../app/api/README.md), [`../app/api/routes/README.md`](../app/api/routes/README.md) |
+| Casos de uso e DTOs | [`../app/application/README.md`](../app/application/README.md) |
+| Configuração e variáveis de ambiente | [`../app/core/README.md`](../app/core/README.md) |
+| Entidades, enums, exceções e interfaces | [`../app/domain/README.md`](../app/domain/README.md) |
+| Banco de dados, models e repositórios | [`../app/infrastructure/database/README.md`](../app/infrastructure/database/README.md) |
+| JWT e hash de senha | [`../app/infrastructure/security/README.md`](../app/infrastructure/security/README.md) |
+| Migrations | [`../app/alembic/README`](../app/alembic/README) |
+| Testes | [`../tests/README.md`](../tests/README.md) |
 
-| Arquivo      | Descrição                                         |
-|--------------|---------------------------------------------------|
-| `demo.gif`   | GIF de demonstração do funcionamento da aplicação |
+O contrato OpenAPI publicado fica no repositório de integração ([ApoiaMaisTech/ApoiaMais](https://github.com/ApoiaMaisTech/ApoiaMais)), em `contratos/auth-service.yaml`.
 
-> 📂 Veja: [`images/README.md`](./images/README.md)
+## Convenções
 
----
-
-## 📋 Convenções
-
-- ✅ Imagens em formato `.png`, `.jpg`, `.gif` ou `.svg`
-- ✅ Diagramas de arquitetura podem ser exportados como `.svg` ou `.png`
-- ✅ Nomeie os arquivos de forma descritiva: `auth-flow-diagram.png`, `er-diagram.svg`
-- ❌ Não versione arquivos binários grandes — utilize LFS ou links externos
-- ❌ Não armazene documentos sensíveis ou credenciais neste diretório
-
----
-
-## 🔗 Como referenciar no README
-
-```markdown
-<img src="./docs/images/demo.gif" alt="Demo ApoiaMais" width="800" />
-```
+- Imagens em `.png`, `.svg` ou `.gif`, com nomes descritivos (`fluxo-login.svg`, `diagrama-er.png`).
+- Diagramas preferencialmente em `.svg`, ou com o arquivo-fonte versionado junto.
+- Evite binários grandes; use links externos quando possível.
+- Não armazene credenciais nem dados pessoais nesta pasta.

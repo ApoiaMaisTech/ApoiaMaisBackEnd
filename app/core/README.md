@@ -1,79 +1,59 @@
-# ⚙️ app/core/
+# app/core/
 
-O diretório `core/` centraliza as **configurações globais** da aplicação. Ele fornece um ponto único de acesso a variáveis de ambiente, settings e parâmetros que são compartilhados entre todas as camadas do sistema.
+Configuração da aplicação, carregada de variáveis de ambiente com **Pydantic Settings**.
 
----
+## Arquivo `config.py`
 
-## 🗂️ Estrutura
+Define a classe `Settings` e a instância global `settings`. Os valores vêm das variáveis de ambiente do processo e, em seguida, do arquivo `.env` no diretório de execução.
 
-```text
-core/
-└── config.py         # Definição e carregamento de configurações via variáveis de ambiente
-```
+| Variável             | Tipo | Padrão      | Obrigatória |
+|----------------------|------|-------------|-------------|
+| `DB_HOST`            | str  | `localhost` | Não |
+| `DB_PORT`            | int  | `3306`      | Não |
+| `DB_USER`            | str  | —           | Sim |
+| `DB_PASSWORD`        | str  | `""`        | Não |
+| `DB_NAME`            | str  | —           | Sim |
+| `JWT_SECRET_KEY`     | str  | —           | Sim |
+| `JWT_ALGORITHM`      | str  | `HS256`     | Não |
+| `JWT_EXPIRE_MINUTES` | int  | `30`        | Não |
 
----
+A propriedade `settings.DATABASE_URL` monta a URL `mysql+aiomysql://usuario:senha@host:porta/banco`.
 
-## 📄 Arquivo: `config.py`
+Como `settings = Settings()` é executado na importação, a ausência de uma variável obrigatória faz a aplicação falhar ao iniciar.
 
-Responsável por carregar e expor todas as **variáveis de ambiente** e configurações da aplicação utilizando **Pydantic Settings**.
+## Quem usa `settings`
 
-### Configurações disponíveis
+| Consumidor | Uso |
+|------------|-----|
+| `app/api/dependencies/services.py` | `JWT_SECRET_KEY` e `JWT_ALGORITHM` para gerar o token no login |
+| `app/alembic/env.py` | `DATABASE_URL` para as migrations |
 
-```python
-from pydantic_settings import BaseSettings
+Alguns módulos ainda leem variáveis diretamente com `os.getenv`, sem passar por `settings`:
 
-class Settings(BaseSettings):
-    # Aplicação
-    APP_NAME: str = "ApoiaMais Backend"
-    APP_ENV: str = "development"
-    DEBUG: bool = False
+| Módulo | Variáveis | Observação |
+|--------|-----------|------------|
+| `app/infrastructure/database/session.py` | `DATABASE_URL` ou `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, `DB_NAME` | Chama `load_dotenv()` e usa padrões próprios (`root`, `ApoiaMaisDB`) |
+| `app/infrastructure/security/jwt.py` | `JWT_SECRET_KEY` | Usado quando `JwtServiceImpl` é criado sem argumentos, caso da validação do token em `api/dependencies/auth.py` |
 
-    # Banco de Dados
-    DATABASE_URL: str
+A consolidação de toda a leitura de configuração em `Settings` é uma melhoria pendente.
 
-    # Segurança
-    SECRET_KEY: str
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+## Arquivo `.env`
 
-    class Config:
-        env_file = ".env"
+Use [`../../.env.example`](../../.env.example) como base. O `.env` é ignorado pelo Git.
 
-settings = Settings()
-```
+O `.env.example` também lista `REDIS_URL` e `RABBITMQ_URL`, que ainda não são lidas pelo código. O `docker-compose.yml` usa, além das variáveis acima, `RABBITMQ_DEFAULT_USER` e `RABBITMQ_DEFAULT_PASS` para configurar o container do RabbitMQ.
 
----
-
-## 🔧 Variáveis de Ambiente
-
-Todas as variáveis devem ser declaradas no arquivo `.env` na raiz do projeto. Utilize o `.env.example` como referência:
-
-| Variável                       | Descrição                              | Padrão         |
-|--------------------------------|----------------------------------------|----------------|
-| `APP_NAME`                     | Nome da aplicação                      | ApoiaMais      |
-| `APP_ENV`                      | Ambiente de execução                   | `development`  |
-| `DEBUG`                        | Modo de depuração                      | `False`        |
-| `DATABASE_URL`                 | URL de conexão com o banco de dados    | —              |
-| `SECRET_KEY`                   | Chave secreta para assinatura JWT      | —              |
-| `ALGORITHM`                    | Algoritmo de criptografia JWT          | `HS256`        |
-| `ACCESS_TOKEN_EXPIRE_MINUTES`  | Expiração do token de acesso (minutos) | `30`           |
-
----
-
-## 📐 Como utilizar
+## Uso
 
 ```python
 from app.core.config import settings
 
-print(settings.DATABASE_URL)
-print(settings.SECRET_KEY)
+settings.DATABASE_URL
+settings.JWT_EXPIRE_MINUTES
 ```
 
----
+## Boas práticas
 
-## 📋 Boas Práticas
-
-- ❌ Nunca faça commit do arquivo `.env` com credenciais reais
-- ✅ Utilize sempre o `.env.example` para documentar as variáveis necessárias
-- ✅ Valores sensíveis devem ser injetados via variáveis de ambiente em produção (Docker Secrets, AWS SSM, etc.)
-- ✅ Importe `settings` apenas onde necessário — evite dependência circular
+- Nunca versione o `.env` nem coloque valores reais no `.env.example`.
+- Em produção, injete os valores por variável de ambiente a partir de um gerenciador de segredos.
+- `JWT_SECRET_KEY` deve ser um valor longo e aleatório, diferente em cada ambiente.

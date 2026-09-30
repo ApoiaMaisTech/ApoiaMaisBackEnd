@@ -1,1 +1,57 @@
-Generic single-database configuration.
+Migrations do banco de dados (Alembic)
+=======================================
+
+O schema do MySQL é versionado por Alembic. O ambiente é assíncrono
+(async_engine_from_config com aiomysql) e a URL do banco vem de
+settings.DATABASE_URL (app/core/config.py), não do alembic.ini.
+
+Arquivos
+--------
+
+  app/alembic.ini                 Configuração (script_location, logging)
+  app/alembic/env.py              Carrega settings e os models (target_metadata)
+  app/alembic/script.py.mako      Template de novas migrations
+  app/alembic/versions/           Migrations
+
+Migrations existentes
+---------------------
+
+  4dd9c591f782_initial_schema.py  Cria as 16 tabelas iniciais (usuários,
+                                  pacientes, gamificação, arquivos,
+                                  notificações e auditoria)
+
+Comandos
+--------
+
+Execute a partir da raiz do repositório do backend, com as variáveis de
+banco definidas (DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME e
+JWT_SECRET_KEY, exigida por Settings):
+
+  python -m alembic -c app/alembic.ini upgrade head
+  python -m alembic -c app/alembic.ini downgrade -1
+  python -m alembic -c app/alembic.ini current
+  python -m alembic -c app/alembic.ini history
+  python -m alembic -c app/alembic.ini revision --autogenerate -m "descricao"
+
+Dentro do container da API (docker compose):
+
+  docker compose exec auth-service python -m alembic -c app/alembic.ini upgrade head
+
+O container da API não executa as migrations ao iniciar. No ambiente
+integrado (repositório ApoiaMais), o serviço "migracoes" do
+docker-compose.yml aplica o upgrade head antes da API ser usada. O CI do
+backend também roda upgrade head antes dos testes.
+
+Observações
+-----------
+
+- O alembic.ini define prepend_sys_path = /app, caminho do container. Fora
+  do container, usar "python -m alembic" a partir da raiz inclui o
+  diretório atual no sys.path.
+- Novos models precisam ser importados em env.py para aparecerem no
+  autogenerate.
+- Sempre revise o arquivo gerado pelo autogenerate. A migration inicial foi
+  ajustada manualmente e difere dos models em alguns pontos.
+- Enums do SQLAlchemy são gravados pelo nome do membro (ex.: STUDENT).
+  Incluir um novo valor em um enum Python exige uma migration que altere a
+  coluna ENUM correspondente.
