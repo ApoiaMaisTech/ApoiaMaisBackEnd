@@ -1,35 +1,35 @@
 # ApoiaMais Backend
 
-    
+[🇧🇷 Português](./README.pt-BR.md)
 
-O **ApoiaMais Backend** é o backend da plataforma educacional ApoiaMais, responsável por fornecer APIs para autenticação, gerenciamento de usuários, relatórios, autorização e outros recursos fundamentais da plataforma.
+**ApoiaMais Backend** is the backend application for the ApoiaMais educational platform, providing APIs for authentication, user management, reports, authorization, and other core platform features.
 
-O projeto foi desenvolvido utilizando **Python e FastAPI**, seguindo princípios de **Clean Architecture**, separação de responsabilidades e baixo acoplamento entre regras de negócio, banco de dados e infraestrutura.
+The project is built with **Python and FastAPI**, following **Clean Architecture** principles to keep business rules independent from frameworks, databases, and infrastructure concerns.
 
 <img src="./docs/images/demo.gif" />
 
-## Funcionalidades
+## Features
 
-* API RESTful desenvolvida com FastAPI
-* Autenticação baseada em JWT
-* Autorização baseada em funções
-* Gerenciamento de usuários
-* API de relatórios
-* Hash seguro de senhas
-* Rate limiting baseado em IP
-* Persistência com MySQL e SQLAlchemy
-* Migrations de banco de dados com Alembic
-* Redis para rate limiting distribuído
-* Respostas de erro padronizadas
-* Testes unitários e de integração
-* Geração de contratos OpenAPI
-* Sincronização automática de contratos
-* Execução através de Docker e Docker Compose
-* Integração contínua com GitHub Actions
+* RESTful API built with FastAPI
+* JWT-based authentication
+* Role-based authorization
+* User management
+* Reports API
+* Password hashing and secure credential handling
+* IP-based rate limiting
+* MySQL persistence with SQLAlchemy
+* Database migrations with Alembic
+* Redis integration for distributed rate limiting
+* Standardized API error responses
+* Unit and integration tests
+* OpenAPI contract generation
+* Automated contract synchronization
+* Docker and Docker Compose support
+* GitHub Actions CI
 
-## Arquitetura
+## Architecture
 
-A aplicação segue uma arquitetura em camadas inspirada nos princípios de **Clean Architecture**:
+The application follows a layered architecture inspired by **Clean Architecture**:
 
 ```text
 app/
@@ -59,21 +59,21 @@ app/
 
 ### API
 
-A camada de API contém a aplicação FastAPI, rotas HTTP, dependências, autenticação, rate limiting e tratamento de exceções.
+The API layer contains the FastAPI application, HTTP routes, dependencies, authentication dependencies, rate limiting, and exception handlers.
 
 ### Application
 
-A camada de aplicação contém os casos de uso e DTOs responsáveis por orquestrar as operações do sistema, sem acoplamento direto com HTTP ou infraestrutura.
+The application layer contains the use cases and DTOs used to orchestrate application behavior without coupling business logic directly to HTTP or infrastructure.
 
 ### Domain
 
-A camada de domínio contém as principais regras de negócio, entidades, contratos de repositórios, serviços, enums e exceções específicas do domínio.
+The domain layer contains the core business rules, entities, repository abstractions, domain services, enums, and business exceptions.
 
 ### Infrastructure
 
-A camada de infraestrutura contém as implementações concretas utilizadas pela aplicação, incluindo banco de dados, segurança, JWT, hashing de senhas e rate limiting.
+The infrastructure layer contains concrete implementations for database access, security, JWT handling, password hashing, and rate limiting.
 
-## Estrutura do Projeto
+## Project Structure
 
 ```text
 ApoiaMaisBackEnd/
@@ -113,32 +113,32 @@ ApoiaMaisBackEnd/
 └── requirements.txt
 ```
 
-## Tecnologias
+## Tech Stack
 
-| Tecnologia     | Utilização                                  |
-| -------------- | ------------------------------------------- |
-| Python         | Desenvolvimento do backend                  |
-| FastAPI        | API REST                                    |
-| SQLAlchemy     | ORM e acesso ao banco                       |
-| Alembic        | Migrations                                  |
-| MySQL          | Banco de dados relacional                   |
-| Redis          | Rate limiting e armazenamento compartilhado |
-| JWT            | Autenticação                                |
-| Docker         | Containerização                             |
-| Pytest         | Testes automatizados                        |
-| GitHub Actions | CI e automações                             |
-| OpenAPI        | Contratos da API                            |
+| Technology     | Purpose                        |
+| -------------- | ------------------------------ |
+| Python         | Backend development            |
+| FastAPI        | REST API                       |
+| SQLAlchemy     | ORM and database access        |
+| Alembic        | Database migrations            |
+| MySQL          | Relational database            |
+| Redis          | Rate limiting and shared state |
+| JWT            | Authentication                 |
+| Docker         | Containerization               |
+| Pytest         | Automated testing              |
+| GitHub Actions | CI and automation              |
+| OpenAPI        | API contracts                  |
 
-## Primeiros Passos
+## Getting Started
 
-### Requisitos
+### Requirements
 
 * Python 3.12+
 * Docker
 * Docker Compose
 * Git
 
-### Clonar o repositório
+### Clone the repository
 
 ```bash
 git clone https://github.com/ApoiaMaisTech/ApoiaMaisBackEnd.git
@@ -146,91 +146,91 @@ git clone https://github.com/ApoiaMaisTech/ApoiaMaisBackEnd.git
 cd ApoiaMaisBackEnd
 ```
 
-### Configurar o ambiente
+### Configure the environment
 
-Crie o arquivo `.env` a partir do exemplo:
+Create your local environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-Configure as variáveis necessárias no arquivo `.env`.
+Configure the required environment variables in `.env`.
 
-### Executar com Docker
+### Run with Docker
 
 ```bash
 docker compose up --build
 ```
 
-Para executar em segundo plano:
+To run in the background:
 
 ```bash
 docker compose up --build -d
 ```
 
-Para visualizar os logs:
+View the application logs:
 
 ```bash
 docker compose logs -f
 ```
 
-Para parar o ambiente:
+Stop the environment:
 
 ```bash
 docker compose down
 ```
 
-## Desenvolvimento Local
+## Local Development
 
-Crie um ambiente virtual:
+Create a virtual environment:
 
 ```bash
 python -m venv .venv
 ```
 
-Ative o ambiente:
+Activate it:
 
 ```bash
 source .venv/bin/activate
 ```
 
-Instale as dependências:
+Install the dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Execute a aplicação:
+Run the application:
 
 ```bash
 uvicorn main:app --reload
 ```
 
-A API estará disponível em:
+The API will be available at:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-Documentação interativa:
+Interactive API documentation:
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-Documentação alternativa:
+Alternative documentation:
 
 ```text
 http://127.0.0.1:8000/redoc
 ```
 
-## Autenticação e Autorização
+## Authentication & Authorization
 
-A autenticação da aplicação utiliza **JSON Web Tokens (JWT)**.
+Authentication is implemented using **JWT tokens**.
 
-As rotas protegidas validam o usuário autenticado e verificam as permissões necessárias antes da execução dos casos de uso.
+Protected routes validate the authenticated user and enforce the required role before executing the corresponding use case.
 
-Os principais componentes estão localizados em:
+The main authentication components are located in:
 
 ```text
 app/
@@ -242,60 +242,56 @@ app/
 
 ## Rate Limiting
 
-A API possui rate limiting baseado em IP para proteger endpoints contra excesso de requisições.
+The API includes IP-based rate limiting to protect sensitive endpoints.
 
-A implementação está localizada em:
+The main implementation is located in:
 
 ```text
 app/api/dependencies/rate_limit.py
 app/infrastructure/rate_limit.py
 ```
 
-Quando o Redis está configurado, os contadores podem ser compartilhados entre diferentes processos da aplicação.
+When Redis is configured, rate-limit counters can be shared between application processes.
 
-Caso o Redis não esteja configurado, o sistema utiliza armazenamento em memória.
+When Redis is not configured, the application falls back to in-memory storage.
 
-Quando o limite é excedido, a API retorna:
+When a limit is exceeded, the API returns:
 
 ```http
 429 Too Many Requests
 ```
 
-juntamente com o cabeçalho:
+with the `Retry-After` header.
 
-```http
-Retry-After
-```
+## Error Handling
 
-## Tratamento de Erros
-
-As respostas de erro da API seguem um formato padronizado:
+API errors follow a standardized response format:
 
 ```json
 {
   "success": false,
-  "message": "Mensagem do erro",
+  "message": "Error message",
   "errors": []
 }
 ```
 
-As exceções específicas do domínio estão separadas das exceções HTTP:
+Domain exceptions are defined separately from HTTP handling:
 
 ```text
 app/domain/exceptions/
 ```
 
-O tratamento das exceções da API é centralizado em:
+and mapped to API responses through:
 
 ```text
 app/api/exception_handlers.py
 ```
 
-## Banco de Dados
+## Database
 
-O projeto utiliza **MySQL** com **SQLAlchemy**.
+The project uses **MySQL** with SQLAlchemy.
 
-A infraestrutura de persistência está organizada em:
+Database infrastructure is organized as:
 
 ```text
 app/infrastructure/database/
@@ -307,22 +303,22 @@ app/infrastructure/database/
 └── session.py
 ```
 
-As alterações do schema são controladas através do **Alembic**:
+Database schema changes are managed with **Alembic**.
 
 ```text
 app/alembic/
 └── versions/
 ```
 
-Para aplicar as migrations:
+Apply migrations with:
 
 ```bash
 alembic upgrade head
 ```
 
-## Testes
+## Testing
 
-O projeto possui testes unitários e de integração.
+The project includes both unit and integration tests.
 
 ```text
 tests/
@@ -335,63 +331,63 @@ tests/
     └── test_rate_limiter_storage.py
 ```
 
-Executar todos os testes:
+Run the complete test suite:
 
 ```bash
 pytest
 ```
 
-Executar somente os testes unitários:
+Run unit tests:
 
 ```bash
 pytest tests/unit
 ```
 
-Executar os testes de integração:
+Run integration tests:
 
 ```bash
 pytest tests/integration
 ```
 
-Executar a matriz de autorização:
+Run the authorization matrix:
 
 ```bash
 pytest tests/integration/api/test_authorization_matrix.py
 ```
 
-## Contratos da API
+## API Contracts
 
-O código do backend é a fonte da verdade dos contratos da API.
+The backend source code is the source of truth for the API contracts.
 
-Os contratos OpenAPI são gerados automaticamente e sincronizados com o repositório de integração do ApoiaMais.
+OpenAPI contracts are generated automatically and synchronized with the ApoiaMais integration repository.
 
-A configuração dos contratos está em:
+Contract configuration is defined in:
 
 ```text
 contratos.json
 ```
 
-Para exportar todos os contratos:
+Export all contracts:
 
 ```bash
 python scripts/exportar_contratos.py \
   --saida ../ApoiaMais/contratos
 ```
 
-Para exportar um contrato específico:
+Export a specific service:
 
 ```bash
 python scripts/exportar_contratos.py \
   --so auth-service
 ```
 
-Para realizar a exportação utilizando Docker:
+Export using Docker:
 
 ```bash
 python scripts/exportar_contratos.py --docker
 ```
 
-Também é possível exportar um único aplicativo:
+A single OpenAPI application can also be exported with:
 
 ```bash
 python scripts/exportar_openapi.py \
@@ -400,9 +396,9 @@ python scripts/exportar_openapi.py \
   --saida api.yaml
 ```
 
-## CI e Automação
+## CI & Automation
 
-As automações do projeto utilizam **GitHub Actions**:
+GitHub Actions workflows are located in:
 
 ```text
 .github/workflows/
@@ -410,42 +406,41 @@ As automações do projeto utilizam **GitHub Actions**:
 └── sync-contrato.yml
 ```
 
-### Integração Contínua
+### Continuous Integration
 
-O workflow `ci.yml` executa as validações automatizadas e os testes do projeto.
+`ci.yml` runs the project's automated validation and test pipeline.
 
-### Sincronização dos Contratos
+### Contract Synchronization
 
-O workflow `sync-contrato.yml` automatiza a geração e sincronização dos contratos OpenAPI.
+`sync-contrato.yml` automatically exports API contracts when relevant backend changes are pushed to `main`.
 
-O fluxo funciona da seguinte maneira:
+When a contract changes, the workflow creates or updates the corresponding Pull Request in the integration repository.
 
 ```text
-Alteração no backend
-        │
-        ▼
+Backend change
+      │
+      ▼
 GitHub Actions
-        │
-        ▼
-Geração dos contratos OpenAPI
-        │
-        ▼
-Verificação de alterações
-        │
-        ├── Sem alteração
-        │
-        └── Contrato alterado
-                │
-                ▼
-        Pull Request no
-        repositório de integração
+      │
+      ▼
+OpenAPI generation
+      │
+      ▼
+Contract comparison
+      │
+      ├── No changes
+      │
+      └── Changes detected
+              │
+              ▼
+        Integration PR
 ```
 
-## Primeiro Professor
+## First Teacher
 
-Alguns fluxos de cadastro exigem um professor autenticado.
+User creation for protected flows requires an authenticated teacher.
 
-O primeiro professor pode ser criado utilizando o script:
+The first teacher can be created using the project script:
 
 ```bash
 python scripts/criar_usuario.py \
@@ -455,11 +450,11 @@ python scripts/criar_usuario.py \
   --senha "uma-senha-forte"
 ```
 
-Quando executado através do Docker, utilize o container correspondente definido no `docker-compose.yml`.
+When running inside Docker, execute the command from the appropriate application container defined in `docker-compose.yml`.
 
-## Documentação
+## Documentation
 
-A documentação adicional do projeto está disponível em:
+Additional project documentation is available in:
 
 ```text
 docs/
@@ -467,10 +462,12 @@ docs/
 └── images/
 ```
 
-A documentação da API é gerada automaticamente pelo FastAPI através do Swagger UI e ReDoc.
+API documentation is automatically provided by FastAPI through Swagger UI and ReDoc.
 
-## Licença
+## License
 
-Este projeto está licenciado sob a **Licença MIT**.
+This project is licensed under the terms defined in the [LICENSE](./LICENSE) file.
 
-Consulte o arquivo [LICENSE](./LICENSE) para obter o texto completo da licença.
+## ApoiaMais
+
+ApoiaMais is an educational technology platform designed to support learning experiences through technology, interactive resources, and intelligent educational tools.
