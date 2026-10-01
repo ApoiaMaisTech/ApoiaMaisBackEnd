@@ -1,118 +1,476 @@
-
 # ApoiaMais Backend
 
-O **ApoiaMais Backend** é uma plataforma educacional baseada em **Arquitetura de Microsserviços**, desenvolvida para oferecer uma solução escalável para gerenciamento de usuários, atividades educacionais, geração de histórias, imagens utilizando inteligência artificial e demais recursos da plataforma.
+    
 
-O sistema foi desenvolvido utilizando **Python**, **FastAPI**, **MySQL**, **RabbitMQ**, **Redis** e **Docker**, adotando uma **Arquitetura de Microsserviços**, onde cada serviço possui uma responsabilidade específica, seu próprio banco de dados e comunicação independente, proporcionando maior escalabilidade, organização e facilidade de manutenção.
+O **ApoiaMais Backend** é o backend da plataforma educacional ApoiaMais, responsável por fornecer APIs para autenticação, gerenciamento de usuários, relatórios, autorização e outros recursos fundamentais da plataforma.
+
+O projeto foi desenvolvido utilizando **Python e FastAPI**, seguindo princípios de **Clean Architecture**, separação de responsabilidades e baixo acoplamento entre regras de negócio, banco de dados e infraestrutura.
 
 <img src="./docs/images/demo.gif" />
 
----
+## Funcionalidades
 
-### Estrutura do Projeto
+* API RESTful desenvolvida com FastAPI
+* Autenticação baseada em JWT
+* Autorização baseada em funções
+* Gerenciamento de usuários
+* API de relatórios
+* Hash seguro de senhas
+* Rate limiting baseado em IP
+* Persistência com MySQL e SQLAlchemy
+* Migrations de banco de dados com Alembic
+* Redis para rate limiting distribuído
+* Respostas de erro padronizadas
+* Testes unitários e de integração
+* Geração de contratos OpenAPI
+* Sincronização automática de contratos
+* Execução através de Docker e Docker Compose
+* Integração contínua com GitHub Actions
+
+## Arquitetura
+
+A aplicação segue uma arquitetura em camadas inspirada nos princípios de **Clean Architecture**:
 
 ```text
-ApoiaMaisBackend/
-├── api-gateway/
+app/
+├── api/
+│   ├── dependencies/
+│   └── routes/
+│
+├── application/
+│   ├── common/
+│   ├── dto/
+│   └── use_cases/
+│
+├── core/
+│
+├── domain/
+│   ├── entities/
+│   ├── enums/
+│   ├── exceptions/
+│   ├── repositories/
+│   └── services/
+│
+└── infrastructure/
+    ├── database/
+    ├── rate_limit.py
+    └── security/
+```
+
+### API
+
+A camada de API contém a aplicação FastAPI, rotas HTTP, dependências, autenticação, rate limiting e tratamento de exceções.
+
+### Application
+
+A camada de aplicação contém os casos de uso e DTOs responsáveis por orquestrar as operações do sistema, sem acoplamento direto com HTTP ou infraestrutura.
+
+### Domain
+
+A camada de domínio contém as principais regras de negócio, entidades, contratos de repositórios, serviços, enums e exceções específicas do domínio.
+
+### Infrastructure
+
+A camada de infraestrutura contém as implementações concretas utilizadas pela aplicação, incluindo banco de dados, segurança, JWT, hashing de senhas e rate limiting.
+
+## Estrutura do Projeto
+
+```text
+ApoiaMaisBackEnd/
 ├── app/
+│   ├── alembic/
 │   ├── api/
 │   ├── application/
 │   ├── core/
 │   ├── domain/
 │   └── infrastructure/
+│
 ├── docs/
 │   └── images/
-├── .gitignore
+│
+├── scripts/
+│   ├── criar_usuario.py
+│   ├── exportar_contratos.py
+│   └── exportar_openapi.py
+│
+├── tests/
+│   ├── integration/
+│   └── unit/
+│
+├── .github/
+│   └── workflows/
+│       ├── ci.yml
+│       └── sync-contrato.yml
+│
+├── contratos.json
 ├── docker-compose.yml
-├── README.md
+├── Dockerfile
+├── Dockerfile.db
+├── .env.example
+├── init_db.sh
+├── main.py
+├── pytest.ini
 └── requirements.txt
 ```
+
+## Tecnologias
+
+| Tecnologia     | Utilização                                  |
+| -------------- | ------------------------------------------- |
+| Python         | Desenvolvimento do backend                  |
+| FastAPI        | API REST                                    |
+| SQLAlchemy     | ORM e acesso ao banco                       |
+| Alembic        | Migrations                                  |
+| MySQL          | Banco de dados relacional                   |
+| Redis          | Rate limiting e armazenamento compartilhado |
+| JWT            | Autenticação                                |
+| Docker         | Containerização                             |
+| Pytest         | Testes automatizados                        |
+| GitHub Actions | CI e automações                             |
+| OpenAPI        | Contratos da API                            |
+
+## Primeiros Passos
+
+### Requisitos
+
+* Python 3.12+
+* Docker
+* Docker Compose
+* Git
 
 ### Clonar o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/apoiamais-backend.git
+git clone https://github.com/ApoiaMaisTech/ApoiaMaisBackEnd.git
 
-cd apoiamais-backend
+cd ApoiaMaisBackEnd
 ```
 
-### Iniciar os serviços
+### Configurar o ambiente
+
+Crie o arquivo `.env` a partir do exemplo:
+
+```bash
+cp .env.example .env
+```
+
+Configure as variáveis necessárias no arquivo `.env`.
+
+### Executar com Docker
 
 ```bash
 docker compose up --build
 ```
 
-Só a API publica porta, e apenas em `127.0.0.1:8000`. MySQL, Redis e RabbitMQ ficam acessíveis somente pela rede interna do Docker. A imagem roda sem `--reload` e sem root; após mudar o código, rode `docker compose up --build` de novo.
-
-### Primeiro professor
-
-Os cadastros (`POST /api/users/students` e `/teachers`) exigem um professor autenticado. O primeiro é criado direto no banco:
+Para executar em segundo plano:
 
 ```bash
-docker compose exec auth-service python -m scripts.criar_usuario --role teacher --nome "Professor" --email professor@exemplo.dev --senha "uma-senha-forte"
+docker compose up --build -d
 ```
 
-### Autorização e rate limiting
+Para visualizar os logs:
 
-A matriz de quem acessa cada rota está no topo de `app/api/routes/users.py` e é verificada por `tests/integration/api/test_authorization_matrix.py`. Os limites por IP (`RATE_LIMIT_DEFAULT`, `RATE_LIMIT_LOGIN`, `RATE_LIMIT_USER_CREATION`) são configurados no `.env`; com `REDIS_URL` definido os contadores ficam no Redis, sem ele ficam em memória (vale só para um processo). Ao estourar o limite a API responde `429` com o cabeçalho `Retry-After`.
-
-Todas as respostas de erro seguem o formato `{"success": false, "message": "...", "errors": [...]}`.
-### Cada microsserviço segue a mesma organização interna.
-
-```text
-controllers/
-services/
-repositories/
-models/
-routes/
-schemas/
-config/
-database/
-utils/
+```bash
+docker compose logs -f
 ```
 
----
+Para parar o ambiente:
 
-### Fluxo da Aplicação
-
-```text
-Cliente
-    │
-    ▼
-API Gateway
-    │
-    ├────────► Auth Service
-    ├────────► User Service
-    ├────────► Ludic Service
-    ├────────► File Service
-    ├────────► Notification Service
-    ├────────► Report Service
-    └────────► Audit Service
+```bash
+docker compose down
 ```
 
-### Contrato da API
+## Desenvolvimento Local
 
-O código deste repositório é a fonte da verdade do contrato da API. Os contratos OpenAPI aprovados ficam no repositório de integração ([ApoiaMaisTech/ApoiaMais](https://github.com/ApoiaMaisTech/ApoiaMais)), em `contratos/<servico>.yaml`, e o frontend gera seus tipos a partir deles. Nenhum contrato é escrito à mão.
+Crie um ambiente virtual:
 
-Os serviços exportados estão listados em `contratos.json` (nome do contrato, pasta, `modulo:variavel` do app e, opcionalmente, variáveis de ambiente fictícias que o import exige).
+```bash
+python -m venv .venv
+```
 
-**Exportar localmente** (não precisa de MySQL, RabbitMQ nem Redis, e nem de `.env`):
+Ative o ambiente:
+
+```bash
+source .venv/bin/activate
+```
+
+Instale as dependências:
 
 ```bash
 pip install -r requirements.txt
-python scripts/exportar_contratos.py --saida ../ApoiaMais/contratos
 ```
 
-- `--so auth-service`: exporta apenas os serviços informados.
-- `--docker`: exporta dentro do container de cada serviço (`docker compose run --rm --no-deps -T`), útil quando as dependências locais não batem. Requer o `.env` usado pelo `docker-compose.yml`.
-- Para exportar um único app: `python scripts/exportar_openapi.py --app main:app --dir . --saida auth-service.yaml` (sem `--saida`, imprime no stdout). Rodando direto, as variáveis exigidas pelo `app/core/config.py` (`DB_USER`, `DB_NAME`, `JWT_SECRET_KEY`) precisam estar no ambiente ou no `.env`; o `exportar_contratos.py` já as preenche com valores fictícios.
+Execute a aplicação:
 
-**Automação** (`.github/workflows/sync-contrato.yml`): a cada push na `main` que altere o código da API, `contratos.json` ou `scripts/` (ou manualmente, via *Run workflow*), o GitHub Actions exporta os contratos e abre — ou atualiza — um PR no repositório de integração na branch `contrato/sync-backend`, com as labels `contrato` e `automatico` e o link do commit de origem. Se o contrato não mudou, nenhum PR é aberto. O workflow usa um GitHub App (`vars.APP_ID` e `secrets.APP_PRIVATE_KEY`) para que o PR dispare os workflows de validação do repositório de integração.
+```bash
+uvicorn main:app --reload
+```
 
-### Documentação
+A API estará disponível em:
 
-Toda a documentação do projeto está localizada no diretório `docs/`.
+```text
+http://127.0.0.1:8000
+```
+
+Documentação interativa:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Documentação alternativa:
+
+```text
+http://127.0.0.1:8000/redoc
+```
+
+## Autenticação e Autorização
+
+A autenticação da aplicação utiliza **JSON Web Tokens (JWT)**.
+
+As rotas protegidas validam o usuário autenticado e verificam as permissões necessárias antes da execução dos casos de uso.
+
+Os principais componentes estão localizados em:
+
+```text
+app/
+├── api/dependencies/auth.py
+├── application/use_cases/auth/
+├── domain/services/jwt_service.py
+└── infrastructure/security/jwt.py
+```
+
+## Rate Limiting
+
+A API possui rate limiting baseado em IP para proteger endpoints contra excesso de requisições.
+
+A implementação está localizada em:
+
+```text
+app/api/dependencies/rate_limit.py
+app/infrastructure/rate_limit.py
+```
+
+Quando o Redis está configurado, os contadores podem ser compartilhados entre diferentes processos da aplicação.
+
+Caso o Redis não esteja configurado, o sistema utiliza armazenamento em memória.
+
+Quando o limite é excedido, a API retorna:
+
+```http
+429 Too Many Requests
+```
+
+juntamente com o cabeçalho:
+
+```http
+Retry-After
+```
+
+## Tratamento de Erros
+
+As respostas de erro da API seguem um formato padronizado:
+
+```json
+{
+  "success": false,
+  "message": "Mensagem do erro",
+  "errors": []
+}
+```
+
+As exceções específicas do domínio estão separadas das exceções HTTP:
+
+```text
+app/domain/exceptions/
+```
+
+O tratamento das exceções da API é centralizado em:
+
+```text
+app/api/exception_handlers.py
+```
+
+## Banco de Dados
+
+O projeto utiliza **MySQL** com **SQLAlchemy**.
+
+A infraestrutura de persistência está organizada em:
+
+```text
+app/infrastructure/database/
+├── base.py
+├── mappers/
+├── models/
+├── repositories/
+├── mixins.py
+└── session.py
+```
+
+As alterações do schema são controladas através do **Alembic**:
+
+```text
+app/alembic/
+└── versions/
+```
+
+Para aplicar as migrations:
+
+```bash
+alembic upgrade head
+```
+
+## Testes
+
+O projeto possui testes unitários e de integração.
+
+```text
+tests/
+├── integration/
+│   ├── api/
+│   └── repositories/
+│
+└── unit/
+    ├── use_cases/
+    └── test_rate_limiter_storage.py
+```
+
+Executar todos os testes:
+
+```bash
+pytest
+```
+
+Executar somente os testes unitários:
+
+```bash
+pytest tests/unit
+```
+
+Executar os testes de integração:
+
+```bash
+pytest tests/integration
+```
+
+Executar a matriz de autorização:
+
+```bash
+pytest tests/integration/api/test_authorization_matrix.py
+```
+
+## Contratos da API
+
+O código do backend é a fonte da verdade dos contratos da API.
+
+Os contratos OpenAPI são gerados automaticamente e sincronizados com o repositório de integração do ApoiaMais.
+
+A configuração dos contratos está em:
+
+```text
+contratos.json
+```
+
+Para exportar todos os contratos:
+
+```bash
+python scripts/exportar_contratos.py \
+  --saida ../ApoiaMais/contratos
+```
+
+Para exportar um contrato específico:
+
+```bash
+python scripts/exportar_contratos.py \
+  --so auth-service
+```
+
+Para realizar a exportação utilizando Docker:
+
+```bash
+python scripts/exportar_contratos.py --docker
+```
+
+Também é possível exportar um único aplicativo:
+
+```bash
+python scripts/exportar_openapi.py \
+  --app main:app \
+  --dir . \
+  --saida api.yaml
+```
+
+## CI e Automação
+
+As automações do projeto utilizam **GitHub Actions**:
+
+```text
+.github/workflows/
+├── ci.yml
+└── sync-contrato.yml
+```
+
+### Integração Contínua
+
+O workflow `ci.yml` executa as validações automatizadas e os testes do projeto.
+
+### Sincronização dos Contratos
+
+O workflow `sync-contrato.yml` automatiza a geração e sincronização dos contratos OpenAPI.
+
+O fluxo funciona da seguinte maneira:
+
+```text
+Alteração no backend
+        │
+        ▼
+GitHub Actions
+        │
+        ▼
+Geração dos contratos OpenAPI
+        │
+        ▼
+Verificação de alterações
+        │
+        ├── Sem alteração
+        │
+        └── Contrato alterado
+                │
+                ▼
+        Pull Request no
+        repositório de integração
+```
+
+## Primeiro Professor
+
+Alguns fluxos de cadastro exigem um professor autenticado.
+
+O primeiro professor pode ser criado utilizando o script:
+
+```bash
+python scripts/criar_usuario.py \
+  --role teacher \
+  --nome "Professor" \
+  --email professor@exemplo.dev \
+  --senha "uma-senha-forte"
+```
+
+Quando executado através do Docker, utilize o container correspondente definido no `docker-compose.yml`.
+
+## Documentação
+
+A documentação adicional do projeto está disponível em:
 
 ```text
 docs/
+├── README.md
 └── images/
+```
+
+A documentação da API é gerada automaticamente pelo FastAPI através do Swagger UI e ReDoc.
+
+## Licença
+
+Este projeto está licenciado sob a **Licença MIT**.
+
+Consulte o arquivo [LICENSE](./LICENSE) para obter o texto completo da licença.
