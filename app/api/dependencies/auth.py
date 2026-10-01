@@ -1,42 +1,48 @@
-﻿from uuid import UUID
+from uuid import UUID
 
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from app.api.dependencies.services import get_jwt_service
 from app.domain.enums.user import UserRole
-from app.infrastructure.security.jwt import JwtServiceImpl
+from app.domain.services.jwt_service import JwtService
 
-security = HTTPBearer()
+# auto_error=False: sem token devolvemos 401 (o padrão do FastAPI é 403)
+security = HTTPBearer(auto_error=False)
 
 
-def get_jwt_service() -> JwtServiceImpl:
-    return JwtServiceImpl()
+def _unauthorized(detail: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    jwt_service: JwtServiceImpl = Depends(get_jwt_service),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    jwt_service: JwtService = Depends(get_jwt_service),
 ) -> dict:
-    token = credentials.credentials
-    try:
-        payload = jwt_service.verify_token(token)
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token expirado.",
-        )
-    except jwt.InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido.",
-        )
+    if credentials is None:
+        raise _unauthorized("Não autenticado.")
 
-    return {
-        "id": UUID(payload["user_id"]),
-        "email": payload["user_email"],
-        "role": payload["role"],
-    }
+    try:
+        payload = jwt_service.verify_token(credentials.credentials)
+    except jwt.ExpiredSignatureError:
+        raise _unauthorized("Token expirado.")
+    except jwt.InvalidTokenError:
+        raise _unauthorized("Token inválido.")
+
+    # token assinado mas com conteúdo inesperado também é inválido
+    try:
+        return {
+            "id": UUID(str(payload["user_id"])),
+            "email": payload.get("user_email"),
+            "role": UserRole(payload["role"]).value,
+        }
+    except (KeyError, ValueError):
+        raise _unauthorized("Token inválido.")
 
 
 def get_current_teacher(current_user: dict = Depends(get_current_user)) -> dict:

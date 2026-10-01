@@ -2,7 +2,6 @@ from app.domain.enums.user import UserRole
 from app.application.dto.login_request import LoginRequest
 from app.application.dto.token_response import TokenResponse, UserData
 from app.domain.repositories.user_repository import UserRepository
-from app.domain.exceptions.user_not_found import UserNotFoundException
 from app.domain.exceptions.invalid_credentials import InvalidCredentialsException
 from app.domain.services.password_service import PasswordService
 from app.domain.services.jwt_service import JwtService
@@ -15,10 +14,11 @@ class LoginUseCase:
         self.jwt_service = jwt_service
 
     async def execute(self, request: LoginRequest) -> TokenResponse:
-        # busca o usuario pelo email
+        # busca o usuario pelo email; email inexistente e senha errada dao o mesmo erro
+        # para nao revelar quais emails estao cadastrados
         user = await self.user_repository.get_by_email(request.email)
         if not user:
-            raise UserNotFoundException("User not found")
+            raise InvalidCredentialsException()
 
         # verifica se a senha esta correta
         if not self.password_service.verify(request.password, user.password_hash):

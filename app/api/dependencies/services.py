@@ -14,6 +14,7 @@ def get_jwt_service() -> JwtService:
     return JwtServiceImpl(
         secret_key=settings.JWT_SECRET_KEY,
         algorithm=settings.JWT_ALGORITHM,
+        expiration_minutes=settings.JWT_EXPIRE_MINUTES,
     )
 
 

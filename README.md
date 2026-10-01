@@ -41,6 +41,22 @@ cd apoiamais-backend
 ```bash
 docker compose up --build
 ```
+
+Só a API publica porta, e apenas em `127.0.0.1:8000`. MySQL, Redis e RabbitMQ ficam acessíveis somente pela rede interna do Docker. A imagem roda sem `--reload` e sem root; após mudar o código, rode `docker compose up --build` de novo.
+
+### Primeiro professor
+
+Os cadastros (`POST /api/users/students` e `/teachers`) exigem um professor autenticado. O primeiro é criado direto no banco:
+
+```bash
+docker compose exec auth-service python -m scripts.criar_usuario --role teacher --nome "Professor" --email professor@exemplo.dev --senha "uma-senha-forte"
+```
+
+### Autorização e rate limiting
+
+A matriz de quem acessa cada rota está no topo de `app/api/routes/users.py` e é verificada por `tests/integration/api/test_authorization_matrix.py`. Os limites por IP (`RATE_LIMIT_DEFAULT`, `RATE_LIMIT_LOGIN`, `RATE_LIMIT_USER_CREATION`) são configurados no `.env`; com `REDIS_URL` definido os contadores ficam no Redis, sem ele ficam em memória (vale só para um processo). Ao estourar o limite a API responde `429` com o cabeçalho `Retry-After`.
+
+Todas as respostas de erro seguem o formato `{"success": false, "message": "...", "errors": [...]}`.
 ### Cada microsserviço segue a mesma organização interna.
 
 ```text

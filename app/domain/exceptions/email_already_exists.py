@@ -1,4 +1,4 @@
 from .base import DomainException
 class EmailAlreadyExistsException(DomainException):
-    pass
-
+    status_code = 409
+    default_message = "Email already exists"
