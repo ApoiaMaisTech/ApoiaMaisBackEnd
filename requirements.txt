@@ -40,6 +40,7 @@ pytest-asyncio==1.4.0
 python-dotenv==1.0.1
 python-multipart==0.0.32
 PyYAML==6.0.3
+redis==5.0.8
 requests==2.31.0
 rich==15.0.0
 rich-toolkit==0.20.1
@@ -54,5 +55,3 @@ uvicorn==0.30.1
 uvloop==0.22.1
 watchfiles==1.2.0
 websockets==10.4
-python-dotenv==1.0.1
-pytest-asyncio==1.4.0

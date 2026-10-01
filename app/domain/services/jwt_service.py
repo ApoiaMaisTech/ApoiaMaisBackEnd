@@ -6,7 +6,7 @@ from app.domain.enums.user import UserRole
 
 class JwtService(ABC):
     @abstractmethod
-    def generate_token(self, user_id: UUID, role: UserRole) -> str:
+    def generate_token(self, user_id: UUID, user_email: str, role: UserRole) -> str:
         pass
 
     @abstractmethod

@@ -15,6 +15,7 @@ from app.domain.entities.user import User
 from app.domain.enums.user import UserRole
 from app.domain.exceptions.email_already_exists import EmailAlreadyExistsException
 from app.domain.exceptions.user_not_found import UserNotFoundException
+from app.domain.exceptions.forbidden import ForbiddenActionException
 
 
 @pytest.mark.asyncio
@@ -328,5 +329,28 @@ async def test_delete_user_not_found():
 
     with pytest.raises(UserNotFoundException):
         await use_case.execute(user_id)
+
+    repository.delete.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_delete_user_com_cargo_nao_permitido():
+    repository = Mock()
+
+    teacher = User(
+        id=uuid4(),
+        name="Maria",
+        email="maria@example.com",
+        password_hash="hashed",
+        role=UserRole.TEACHER,
+    )
+
+    repository.get_by_id = AsyncMock(return_value=teacher)
+    repository.delete = AsyncMock()
+
+    use_case = DeleteUserUseCase(repository)
+
+    with pytest.raises(ForbiddenActionException):
+        await use_case.execute(teacher.id, deletable_roles={UserRole.STUDENT})
 
     repository.delete.assert_not_awaited()

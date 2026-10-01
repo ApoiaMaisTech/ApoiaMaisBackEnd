@@ -1,0 +1,37 @@
+# Segredos: o .env entra via env_file no compose, nunca na imagem
+.env
+.env.*
+!.env.example
+
+# Git e CI
+.git
+.gitignore
+.gitattributes
+.github
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Fora da imagem de execução
+tests/
+pytest.ini
+docs/
+*.md
+LICENSE
+
+# Docker / IDE / SO
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+.vscode/
+.idea/
+*.log
+.DS_Store

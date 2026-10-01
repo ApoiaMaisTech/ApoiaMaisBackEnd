@@ -18,7 +18,8 @@ DATABASE_URL = os.getenv("DATABASE_URL") or (
 
 engine = create_async_engine(
     DATABASE_URL,
-    echo=True,
+    # SQL no log só quando pedido: em produção vaza dados e polui os logs
+    echo=os.getenv("SQL_ECHO", "false").lower() in ("1", "true", "yes"),
     poolclass=NullPool,
 )
 

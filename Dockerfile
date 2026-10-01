@@ -1,23 +1,27 @@
 FROM python:3.11-slim
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
 WORKDIR /app
 
-# Instala dependências essenciais do sistema para compilar pacotes 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copia o arquivo de dependências da raiz para o container
+# dependências do Python (todas têm wheel para 3.11, sem compilador na imagem)
 COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-# dependências do Python
-RUN pip install --no-cache-dir -r requirements.txt
-
-# O código do seu app será montado via volume no docker-compose, 
-# mas copiamos por garantia para ambientes de produção
-
+# código da aplicação (o .dockerignore deixa de fora .env, testes, docs e .git)
 COPY . .
 
+# roda sem root
+RUN useradd --create-home --uid 10001 appuser && chown -R appuser /app
+USER appuser
 
-# Comando para rodar o FastAPI apontando para o main.py dentro da pasta app
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).status == 200 else 1)"
+
+# sem --reload: imagem de execução, não de desenvolvimento
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

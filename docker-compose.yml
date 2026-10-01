@@ -1,17 +1,24 @@
+# Só a API publica porta, e apenas em 127.0.0.1. MySQL, Redis e RabbitMQ ficam
+# acessíveis somente pela rede interna apoiamais-net.
 services:
   mysql:
     build:
       context: .
       dockerfile: Dockerfile.db
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
       MYSQL_DATABASE: "ApoiaMaisDB"
       MYSQL_USER: app
       MYSQL_PASSWORD: "${DB_PASSWORD}"
-    ports:
-      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
     networks:
       - apoiamais-net
 
@@ -22,15 +29,10 @@ services:
       context: .
       dockerfile: Dockerfile
 
-    restart: always
+    restart: unless-stopped
 
     ports:
-      - "8000:8000"
-
-    volumes:
-      - .:/app
-
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      - "127.0.0.1:8000:8000"
 
     environment:
       DB_HOST: "mysql"
@@ -38,21 +40,22 @@ services:
       DB_USER: "${DB_USER}"
       DB_PASSWORD: "${DB_PASSWORD}"
       DB_NAME: "ApoiaMaisDB"
+      REDIS_URL: "redis://redis:6379/0"
 
     depends_on:
-      - mysql
-      - rabbitmq
-      - redis
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
 
     networks:
       - apoiamais-net
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    restart: always
-    ports:
-      - "5672:5672"
-      - "15672:15672"
+    restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER}"
       RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS}"
@@ -61,9 +64,8 @@ services:
 
   redis:
     image: redis:7-alpine
-    restart: always
-    ports:
-      - "6379:6379"
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
     networks:
       - apoiamais-net
 
