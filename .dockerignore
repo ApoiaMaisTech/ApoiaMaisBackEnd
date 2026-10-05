@@ -21,6 +21,9 @@ venv/
 htmlcov/
 
 # Fora da imagem de execução
+workers/
+contracts/
+requirements-dev.txt
 tests/
 pytest.ini
 docs/

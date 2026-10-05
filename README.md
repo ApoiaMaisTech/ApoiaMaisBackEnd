@@ -4,7 +4,7 @@
 
 **ApoiaMais Backend** is the backend application for the ApoiaMais educational platform, providing APIs for authentication, user management, reports, authorization, and other core platform features.
 
-The project is built with **Python and FastAPI**, following **Clean Architecture** principles to keep business rules independent from frameworks, databases, and infrastructure concerns.
+The main API is built with **Python and FastAPI**, following **Clean Architecture** principles. It is the only owner of the MySQL database. Slow, costly integrations (such as AI image generation for the game) run in a **Go worker** connected through **RabbitMQ**, which never touches the database. See [`docs/ARQUITETURA.md`](./docs/ARQUITETURA.md) (Portuguese) for the architecture and its decisions.
 
 <img src="./docs/images/demo.gif" />
 
@@ -14,12 +14,15 @@ The project is built with **Python and FastAPI**, following **Clean Architecture
 * JWT-based authentication
 * Role-based authorization
 * User management
-* Reports API
+* AI-generated stage illustrations for the game (async, cached per stage)
 * Password hashing and secure credential handling
-* IP-based rate limiting
+* Per-user rate limiting (falls back to IP for anonymous requests)
 * MySQL persistence with SQLAlchemy
 * Database migrations with Alembic
 * Redis integration for distributed rate limiting
+* RabbitMQ messaging with transactional outbox, retry with backoff, DLQ and idempotent consumers
+* Go worker for AI image generation (fake provider by default, OpenAI optional)
+* Structured JSON logs with `X-Correlation-ID` propagated across services
 * Standardized API error responses
 * Unit and integration tests
 * OpenAPI contract generation
@@ -122,7 +125,9 @@ ApoiaMaisBackEnd/
 | SQLAlchemy     | ORM and database access        |
 | Alembic        | Database migrations            |
 | MySQL          | Relational database            |
-| Redis          | Rate limiting and shared state |
+| Redis          | Rate limiting; job locks and AI budget (Go worker) |
+| RabbitMQ       | Asynchronous jobs and events   |
+| Go             | AI image worker                |
 | JWT            | Authentication                 |
 | Docker         | Containerization               |
 | Pytest         | Automated testing              |
@@ -161,6 +166,8 @@ Configure the required environment variables in `.env`.
 ```bash
 docker compose up --build
 ```
+
+This starts `mysql`, `migrate` (applies migrations and exits), `api`, `api-worker`, `go-worker`, `rabbitmq` and `redis`. Only the API publishes a port (`127.0.0.1:8000`). `/docs` and `/openapi.json` are disabled unless `ENABLE_DOCS=true`.
 
 To run in the background:
 
@@ -242,7 +249,7 @@ app/
 
 ## Rate Limiting
 
-The API includes IP-based rate limiting to protect sensitive endpoints.
+The API rate-limits per authenticated user (many hospital tablets share one public IP); anonymous requests and login are limited per IP.
 
 The main implementation is located in:
 
@@ -450,7 +457,7 @@ python scripts/criar_usuario.py \
   --senha "uma-senha-forte"
 ```
 
-When running inside Docker, execute the command from the appropriate application container defined in `docker-compose.yml`.
+When running inside Docker: `docker compose exec api python -m scripts.criar_usuario ...`.
 
 ## Documentation
 
@@ -458,11 +465,14 @@ Additional project documentation is available in:
 
 ```text
 docs/
+├── ARQUITETURA.md   architecture, messaging topology, AI illustrations (pt-BR)
 ├── README.md
 └── images/
+contracts/events/    JSON Schemas of the RabbitMQ events
+workers/go-worker/   Go worker README
 ```
 
-API documentation is automatically provided by FastAPI through Swagger UI and ReDoc.
+Swagger UI and ReDoc are available only with `ENABLE_DOCS=true` (development).
 
 ## License
 
