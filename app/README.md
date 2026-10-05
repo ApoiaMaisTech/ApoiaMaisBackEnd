@@ -1,6 +1,6 @@
 # app/
 
-Código-fonte do backend do ApoiaMais. Hoje o backend é **uma única aplicação FastAPI** (chamada `auth-service` no `docker-compose.yml` e em `contratos.json`), organizada em camadas inspiradas em Clean Architecture. Não há API Gateway nem outros serviços implementados.
+Código-fonte do backend do ApoiaMais. O backend é **uma aplicação FastAPI** (serviço `api` no `docker-compose.yml`; o contrato OpenAPI se chama `auth-service` em `contratos.json`), organizada em camadas inspiradas em Clean Architecture, mais o processo `app/worker.py` (`api-worker`) e o worker Go em `workers/go-worker`. Visão geral em [`docs/ARQUITETURA.md`](../docs/ARQUITETURA.md).
 
 O ponto de entrada fica fora desta pasta, em [`../main.py`](../main.py), que cria a instância `app` do FastAPI, registra os handlers de exceção, o CORS e os routers.
 
@@ -65,11 +65,12 @@ A composição (qual implementação concreta atende cada interface) é feita em
 | Autenticação   | Implementado: login com JWT em `/api/auth/login` |
 | Pacientes, responsáveis, dados clínicos | Somente models e tabelas; sem casos de uso nem rotas |
 | Gamificação (mundos, fases, progresso, conquistas, loja, inventário) | Somente models e tabelas |
-| Conteúdo gerado por IA | Somente model e tabela |
+| Ilustrações por IA (`ai_image`) | Implementado: `/api/stages/{id}/illustration`, `/api/ai-images/{id}`, worker Go |
+| Conteúdo gerado por IA (`ai_content`) | Somente model e tabela |
 | Arquivos, notificações, auditoria | Somente models e tabelas |
 | Relatórios     | Não implementado (arquivos vazios em `application/use_cases/reports/` e `api/routes/reports.py`) |
 
-Redis e RabbitMQ são iniciados pelo `docker-compose.yml`, mas **nenhum código da aplicação os utiliza** até o momento.
+Redis é usado no rate limit; RabbitMQ, pelo `api-worker` (outbox e resultados) e pelo go-worker.
 
 ## Fluxo de uma requisição
 

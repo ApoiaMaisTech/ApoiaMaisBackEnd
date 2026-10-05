@@ -36,6 +36,11 @@ from app.infrastructure.database.models.ludic.world_model import WorldModel
 from app.infrastructure.database.models.ludic.stage_model import StageModel
 from app.infrastructure.database.models.ludic.patient_progress_model import PatientProgressModel
 from app.infrastructure.database.models.ludic.ai_content_model import AIContentModel
+from app.infrastructure.database.models.ludic.ai_image_model import AiImageModel
+
+# Messaging (outbox/inbox)
+from app.infrastructure.database.models.messaging.outbox_event_model import OutboxEventModel
+from app.infrastructure.database.models.messaging.processed_event_model import ProcessedEventModel
 
 __all__ = [
     "UserModel",
@@ -54,6 +59,9 @@ __all__ = [
     "StageModel",
     "PatientProgressModel",
     "AIContentModel",
+    "AiImageModel",
+    "OutboxEventModel",
+    "ProcessedEventModel",
 ]
 
 

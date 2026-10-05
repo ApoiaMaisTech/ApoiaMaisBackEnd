@@ -1,0 +1,15 @@
+{
+  "event_id": "0b4f8a52-6f1e-4b8e-9a54-3d2c1f0e9a11",
+  "event_type": "ai.image.requested",
+  "version": 1,
+  "occurred_at": "2026-10-05T12:00:00Z",
+  "producer": "apoiamais-api",
+  "correlation_id": "4f6c2a9e1b3d4c5e8f7a6b5c4d3e2f1a",
+  "job_id": "7d1e2f3a-4b5c-4d6e-8f9a-0b1c2d3e4f5a",
+  "payload": {
+    "image_id": "7d1e2f3a-4b5c-4d6e-8f9a-0b1c2d3e4f5a",
+    "prompt": "Ilustração infantil para um jogo educativo de alfabetização. Tema: Floresta das Letras - Vogais.",
+    "size": "1024x1024",
+    "storage_key": "ai-images/7d1e2f3a4b5c4d6e8f9a0b1c2d3e4f5a.png"
+  }
+}

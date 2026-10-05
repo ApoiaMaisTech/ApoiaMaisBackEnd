@@ -1,0 +1,17 @@
+{
+  "event_id": "2d6b0c74-8b3a-4dae-9c76-5f4e3b2a1c33",
+  "event_type": "ai.image.generated",
+  "version": 1,
+  "occurred_at": "2026-10-05T12:00:09Z",
+  "producer": "go-worker",
+  "correlation_id": "4f6c2a9e1b3d4c5e8f7a6b5c4d3e2f1a",
+  "job_id": "7d1e2f3a-4b5c-4d6e-8f9a-0b1c2d3e4f5a",
+  "payload": {
+    "image_id": "7d1e2f3a-4b5c-4d6e-8f9a-0b1c2d3e4f5a",
+    "storage_key": "ai-images/7d1e2f3a4b5c4d6e8f9a0b1c2d3e4f5a.png",
+    "mime_type": "image/png",
+    "size_bytes": 182734,
+    "provider": "fake",
+    "model": "placeholder-v1"
+  }
+}

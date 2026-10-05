@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ai.image.generated v1 (go-worker -> API)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["image_id", "storage_key", "mime_type", "size_bytes", "provider", "model"],
+  "properties": {
+    "image_id": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+    "storage_key": {"type": "string", "pattern": "^ai-images/[0-9a-f]{32}\\.png$"},
+    "mime_type": {"enum": ["image/png"]},
+    "size_bytes": {"type": "integer", "minimum": 1, "maximum": 20971520},
+    "provider": {"type": "string", "minLength": 1, "maxLength": 50},
+    "model": {"type": "string", "minLength": 1, "maxLength": 100}
+  }
+}

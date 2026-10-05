@@ -61,3 +61,17 @@ def get_current_student(current_user: dict = Depends(get_current_user)) -> dict:
             detail="Acesso permitido apenas para alunos.",
         )
     return current_user
+
+
+def require_roles(*roles: UserRole):
+    allowed = {role.value for role in roles}
+
+    def dependency(current_user: dict = Depends(get_current_user)) -> dict:
+        if current_user["role"] not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Acesso não permitido para este perfil.",
+            )
+        return current_user
+
+    return dependency

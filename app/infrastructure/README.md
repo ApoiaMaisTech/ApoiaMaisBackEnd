@@ -38,8 +38,9 @@ As implementações são instanciadas em `app/api/dependencies/`.
 | Serviço  | Situação |
 |----------|----------|
 | MySQL 8.0 | Em uso, via SQLAlchemy assíncrono |
-| Redis    | Container sobe no `docker-compose.yml`; não há cliente no código |
-| RabbitMQ | Container sobe no `docker-compose.yml`; não há produtor nem consumidor no código |
+| Redis    | Rate limit (`rate_limit.py`); no go-worker, travas e orçamento de IA |
+| RabbitMQ | `messaging/`: topologia, publisher com confirms, outbox, consumidor com retry/DLQ |
+| Storage  | `storage/`: volume local ou S3/compatível (imagens geradas por IA) |
 
 ## Regras da camada
 

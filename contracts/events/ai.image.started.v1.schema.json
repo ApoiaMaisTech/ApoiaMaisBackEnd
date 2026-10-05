@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ai.image.started v1 (go-worker -> API)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["image_id"],
+  "properties": {
+    "image_id": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"}
+  }
+}

@@ -4,7 +4,7 @@
       "nome": "auth-service",
       "dir": ".",
       "app": "main:app",
-      "docker": "auth-service",
+      "docker": "api",
       "env": {
         "DB_USER": "exportacao",
         "DB_NAME": "exportacao",

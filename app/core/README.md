@@ -41,7 +41,7 @@ A consolidação de toda a leitura de configuração em `Settings` é uma melhor
 
 Use [`../../.env.example`](../../.env.example) como base. O `.env` é ignorado pelo Git.
 
-O `.env.example` também lista `REDIS_URL` e `RABBITMQ_URL`, que ainda não são lidas pelo código. O `docker-compose.yml` usa, além das variáveis acima, `RABBITMQ_DEFAULT_USER` e `RABBITMQ_DEFAULT_PASS` para configurar o container do RabbitMQ.
+`REDIS_URL` e `RABBITMQ_URL` são lidas por `Settings` (a segunda só pelo `api-worker`). O `docker-compose.yml` usa, além das variáveis acima, `RABBITMQ_DEFAULT_USER` e `RABBITMQ_DEFAULT_PASS` para configurar o container do RabbitMQ.
 
 ## Uso
 
