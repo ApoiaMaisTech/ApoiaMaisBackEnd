@@ -1,0 +1,12 @@
+{
+  "event_id": "1c5a9b63-7a2f-4c9f-8b65-4e3d2a1f0b22",
+  "event_type": "ai.image.started",
+  "version": 1,
+  "occurred_at": "2026-10-05T12:00:01Z",
+  "producer": "go-worker",
+  "correlation_id": "4f6c2a9e1b3d4c5e8f7a6b5c4d3e2f1a",
+  "job_id": "7d1e2f3a-4b5c-4d6e-8f9a-0b1c2d3e4f5a",
+  "payload": {
+    "image_id": "7d1e2f3a-4b5c-4d6e-8f9a-0b1c2d3e4f5a"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ai.image.requested v1 (API -> go-worker)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["image_id", "prompt", "size", "storage_key"],
+  "properties": {
+    "image_id": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+    "prompt": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "size": {"enum": ["1024x1024"]},
+    "storage_key": {"type": "string", "pattern": "^ai-images/[0-9a-f]{32}\\.png$"}
+  }
+}

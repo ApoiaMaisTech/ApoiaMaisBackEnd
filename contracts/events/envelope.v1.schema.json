@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apoiamais/contracts/events/envelope.v1.schema.json",
+  "title": "Envelope padrão de eventos ApoiaMais (v1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_type", "version", "occurred_at", "producer", "correlation_id", "payload"],
+  "properties": {
+    "event_id": {"type": "string", "format": "uuid", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+    "event_type": {"type": "string", "pattern": "^[a-z]+(\\.[a-z]+)+$", "maxLength": 100},
+    "version": {"type": "integer", "minimum": 1},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "producer": {"type": "string", "minLength": 1, "maxLength": 50},
+    "correlation_id": {"type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$"},
+    "job_id": {"type": ["string", "null"], "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+    "payload": {"type": "object"}
+  }
+}
