@@ -16,7 +16,7 @@ router = APIRouter()
 @router.post(
     "/login",
     response_model=TokenResponse,
-    dependencies=[Depends(rate_limit("login", settings.RATE_LIMIT_LOGIN))],
+    dependencies=[Depends(rate_limit("login", settings.RATE_LIMIT_LOGIN, per_user=False))],
 )
 async def login(
     request: LoginRequest,
