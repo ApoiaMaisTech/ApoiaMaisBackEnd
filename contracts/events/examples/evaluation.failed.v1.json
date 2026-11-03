@@ -1,0 +1,15 @@
+{
+  "event_id": "7e2f9b3c-4d5a-5b6c-9d0e-1f2a3b4c5d6e",
+  "event_type": "evaluation.failed",
+  "version": 1,
+  "occurred_at": "2026-11-03T12:00:01Z",
+  "producer": "rust-evaluator",
+  "correlation_id": "req-7c1e4b",
+  "job_id": "0b8f3c2a-1d4e-4f5a-9b6c-7d8e9f0a1b2c",
+  "payload": {
+    "evaluation_id": "0b8f3c2a-1d4e-4f5a-9b6c-7d8e9f0a1b2c",
+    "error_code": "invalid_request",
+    "error_message": "item contagem-1: gabarito numérico inválido",
+    "retryable": false
+  }
+}

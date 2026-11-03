@@ -91,3 +91,15 @@ class OutboxRelay:
                     row.published_at = utcnow()
                     published += 1
         return published
+
+
+class SqlEventOutbox:
+    """EventOutbox sobre o MySQL: grava o evento e faz commit (implementa
+    app.domain.repositories.event_outbox.EventOutbox)."""
+
+    def __init__(self, session: AsyncSession):
+        self._session = session
+
+    async def publish(self, event: EventEnvelope) -> None:
+        add_to_outbox(self._session, event)
+        await self._session.commit()

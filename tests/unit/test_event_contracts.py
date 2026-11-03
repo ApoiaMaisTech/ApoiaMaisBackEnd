@@ -19,6 +19,11 @@ from app.application.events.ai_image import (
     storage_key_for,
 )
 from app.application.events.envelope import EventEnvelope, new_event
+from app.application.events.evaluation import (
+    EvaluationCompletedV1,
+    EvaluationFailedV1,
+    EvaluationRequestedV1,
+)
 
 CONTRACTS = Path(__file__).resolve().parents[2] / "contracts" / "events"
 PAYLOADS = {
@@ -26,6 +31,9 @@ PAYLOADS = {
     ("ai.image.started", 1): AiImageStartedV1,
     ("ai.image.generated", 1): AiImageGeneratedV1,
     ("ai.image.failed", 1): AiImageFailedV1,
+    ("evaluation.requested", 1): EvaluationRequestedV1,
+    ("evaluation.completed", 1): EvaluationCompletedV1,
+    ("evaluation.failed", 1): EvaluationFailedV1,
 }
 EXAMPLES = sorted((CONTRACTS / "examples").glob("*.json"))
 

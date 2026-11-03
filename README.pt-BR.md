@@ -40,7 +40,7 @@ cd apoiamais-backend
 docker compose up --build
 ```
 
-Sobem `mysql`, `migrate` (aplica as migrations e termina), `api`, `api-worker`, `go-worker`, `rabbitmq` e `redis`. Só a API publica porta, e apenas em `127.0.0.1:8000`; o resto fica na rede interna do Docker. As imagens rodam sem root, com sistema de arquivos somente leitura; após mudar o código, rode `docker compose up --build` de novo.
+Sobem `mysql`, `migrate` (aplica as migrations e termina), `api`, `api-worker`, `go-worker`, `rust-evaluator`, `rabbitmq` e `redis`. Só a API publica porta, e apenas em `127.0.0.1:8000`; o resto fica na rede interna do Docker. As imagens rodam sem root, com sistema de arquivos somente leitura; após mudar o código, rode `docker compose up --build` de novo.
 
 Por padrão o go-worker usa o provedor `fake` (gera uma imagem local, sem custo). Para usar a OpenAI, defina `AI_PROVIDER=openai` e `OPENAI_API_KEY` no `.env`.
 

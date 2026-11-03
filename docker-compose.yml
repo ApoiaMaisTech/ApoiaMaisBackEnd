@@ -6,6 +6,8 @@
 #   api-worker outbox -> RabbitMQ e resultados dos jobs -> MySQL (python -m app.worker)
 #   go-worker  ai.image.requested -> provedor de IA -> volume de mídia -> ai.image.generated
 #              (sem acesso ao MySQL)
+#   rust-evaluator evaluation.requested -> correção determinística -> evaluation.completed/failed
+#              (sem acesso ao MySQL)
 
 x-api-env: &api-env
   DB_HOST: "mysql"
@@ -134,6 +136,24 @@ services:
       rabbitmq:
         condition: service_healthy
       redis:
+        condition: service_healthy
+    networks:
+      - apoiamais-net
+
+  rust-evaluator:
+    # avaliação de atividades (evaluation.requested -> evaluation.completed/failed); sem banco
+    build:
+      context: ./workers/rust-evaluator
+    restart: unless-stopped
+    environment:
+      AMQP_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
+      PREFETCH: "${EVALUATOR_PREFETCH:-16}"
+      MAX_RETRIES: "${EVALUATOR_MAX_RETRIES:-3}"
+      LOG_LEVEL: "${EVALUATOR_LOG_LEVEL:-info,lapin=warn}"
+    read_only: true
+    <<: *hardening
+    depends_on:
+      rabbitmq:
         condition: service_healthy
     networks:
       - apoiamais-net

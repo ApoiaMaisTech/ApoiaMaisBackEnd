@@ -1,0 +1,23 @@
+{
+  "event_id": "5d0c8a1e-2b3f-5c4d-8e9f-0a1b2c3d4e5f",
+  "event_type": "evaluation.completed",
+  "version": 1,
+  "occurred_at": "2026-11-03T12:00:01Z",
+  "producer": "rust-evaluator",
+  "correlation_id": "req-7c1e4b",
+  "job_id": "0b8f3c2a-1d4e-4f5a-9b6c-7d8e9f0a1b2c",
+  "payload": {
+    "evaluation_id": "0b8f3c2a-1d4e-4f5a-9b6c-7d8e9f0a1b2c",
+    "total_items": 4,
+    "correct_items": 2,
+    "score": 0.7292,
+    "items": [
+      {"item_id": "palavra-1", "correct": true, "score": 0.75},
+      {"item_id": "acento-1", "correct": false, "score": 0.6667},
+      {"item_id": "vogais-1", "correct": false, "score": 0.5},
+      {"item_id": "contagem-1", "correct": true, "score": 1.0}
+    ],
+    "engine": "rust-evaluator",
+    "engine_version": "0.1.0"
+  }
+}

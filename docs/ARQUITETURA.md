@@ -1,6 +1,6 @@
 # Arquitetura do backend ApoiaMais
 
-Documento de referência das decisões tomadas na evolução do backend (FastAPI + Go).
+Documento de referência das decisões tomadas na evolução do backend (FastAPI + Go + Rust).
 Para rodar o projeto, veja o [README](../README.pt-BR.md).
 
 ## Visão geral
@@ -40,6 +40,7 @@ Frontend React/Vite (jogo)
 | `api-worker` (mesma imagem, `python -m app.worker`) | Publica o outbox no RabbitMQ; consome resultados dos jobs e atualiza o MySQL | Sim |
 | `migrate` | `alembic upgrade head` antes de `api`/`api-worker` subirem | Sim |
 | `go-worker` (Go) | Integrações externas e I/O lento: geração de imagens por IA | **Não** (decisão de projeto) |
+| `rust-evaluator` (Rust) | Correção determinística de atividades (`evaluation.*`) | **Não** (decisão de projeto) |
 | RabbitMQ | Comunicação assíncrona entre API e workers | — |
 | Redis | Rate limit da API; idempotência, trava e orçamento diário do go-worker | — |
 
@@ -59,14 +60,21 @@ notificações (e-mail/push) e geração de relatórios (PDF) seguem o mesmo pad
 **FastAPI:** CRUD, autenticação, regras de gamificação, validação e tudo que lê ou
 grava no MySQL.
 
-### Rust: ainda não
+### Rust: rust-evaluator
 
-Não há carga CPU-bound hoje. Avaliar exercícios de alfabetização (comparar resposta,
-distância de edição, normalização de acentos) custa microssegundos em Python.
-Rust passa a valer a pena quando houver: avaliação de **áudio/pronúncia**
-(`AIContentType.AUDIO`), pontuação em lote com p95 medido acima do aceitável, ou
-execução isolada (sandbox/WASM). Antes de um serviço novo, considere uma extensão
-Python em Rust (PyO3). O contrato `evaluation.*` segue o mesmo envelope deste documento.
+Serviço independente ([`workers/rust-evaluator`](../workers/rust-evaluator)) que corrige
+atividades: consome `evaluation.requested` e publica `evaluation.completed` ou
+`evaluation.failed`. Mesmo modelo do go-worker: sem MySQL, entrada e saída por eventos,
+topologia e garantias idênticas. A API publica o pedido pelo outbox
+(`RequestEvaluationUseCase`) e o api-worker consome o resultado com inbox
+(`handlers/evaluation_results.py`).
+
+Por que um serviço à parte, e não Python: a correção é CPU pura e vai crescer
+(áudio/pronúncia, lotes); em Rust ela fica fora do processo da API (não disputa o event
+loop, lição do PBKDF2 em [`PERFORMANCE.md`](PERFORMANCE.md)), escala sozinha e tem
+regras testadas contra os mesmos exemplos de contrato. O que **não** vai para Rust:
+endpoints, autenticação, regras de negócio e qualquer acesso ao banco. Execução de
+código enviado por usuário exige desenho de segurança próprio antes.
 
 ## Ilustrações por IA no jogo
 
@@ -177,6 +185,8 @@ a versão; qualquer outra cria `vN+1` e os consumidores aceitam as duas na trans
 |---|---|---|
 | `go-worker.ai-image` | `ai.image.requested` | go-worker |
 | `apoiamais-api.ai-image-results` | `ai.image.started`, `ai.image.generated`, `ai.image.failed` | api-worker |
+| `rust-evaluator.evaluation` | `evaluation.requested` | rust-evaluator |
+| `apoiamais-api.evaluation-results` | `evaluation.completed`, `evaluation.failed` | api-worker |
 
 Cada fila `Q` tem: `Q` (quorum, `x-delivery-limit=10`, DLX), `Q.retry.10000`,
 `Q.retry.60000`, `Q.retry.300000` (TTL, voltam para `Q`) e `Q.dlq`.
@@ -200,7 +210,9 @@ flowchart LR
 - **Outbox**: o evento é gravado na mesma transação do dado; o relay publica com
   publisher confirms e tenta de novo com backoff se o broker estiver fora. Com o
   RabbitMQ parado a API continua respondendo.
-- **Idempotência**: consumidor Python grava `processed_event` (consumer, event_id)
+- **Idempotência**: o rust-evaluator gera o `event_id` do resultado de forma
+  determinística (UUID v5 do pedido): reprocessar produz o mesmo evento e o inbox da API
+  descarta a duplicata. Consumidor Python grava `processed_event` (consumer, event_id)
   **antes** de aplicar a mudança, na mesma transação: duas entregas simultâneas do mesmo
   evento não aplicam duas vezes nem viram erro (a segunda espera o lock da chave e é
   descartada como duplicata). go-worker usa Redis (`aiimg:done`, trava com token) e não
@@ -241,5 +253,6 @@ flowchart LR
 | `tests/integration/api` | rotas, autorização, rate limit por usuário, docs fechadas, correlation id |
 | `tests/integration/messaging` | MySQL real (outbox, inbox, transições) e RabbitMQ real (ack, retry, DLQ, unrouted, reconexão) |
 | `workers/go-worker/...` | handler, moderação, provedores (httptest), Redis (miniredis), storage, broker com RabbitMQ real |
+| `workers/rust-evaluator/...` | regras de correção, contrato (o exemplo de pedido gera exatamente o exemplo de resultado), RabbitMQ real (completed, failed, DLQ, reentrega) |
 
 Testes opcionais de S3: `S3_TEST_ENDPOINT`/`S3_TEST_BUCKET` (ver `tests/unit/test_storage.py`).

@@ -1,13 +1,17 @@
 # Contratos de eventos
 
 JSON Schemas dos eventos trocados pelo RabbitMQ. São a fonte de verdade entre a API
-(Python) e os workers (Go):
+(Python) e os workers (Go e Rust):
 
 - `events/envelope.v1.schema.json`: envelope comum a todas as mensagens.
 - `events/<event_type>.v<versão>.schema.json`: payload de cada evento.
 - `events/examples/*.json`: um exemplo completo por evento. Os testes de contrato do
-  Python (`tests/unit/test_event_contracts.py`) e do Go
-  (`workers/go-worker/internal/events/events_test.go`) leem estes mesmos arquivos.
+  Python (`tests/unit/test_event_contracts.py`), do Go
+  (`workers/go-worker/internal/events/events_test.go`) e do Rust
+  (`workers/rust-evaluator/tests/contracts.rs`) leem estes mesmos arquivos.
+- `evaluation.completed.v1.json` é a saída exata do rust-evaluator para
+  `evaluation.requested.v1.json` (o teste do Rust confere): mudar uma regra de correção
+  exige atualizar o exemplo.
 
 ## Regras de versionamento
 
