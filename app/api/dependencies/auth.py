@@ -4,9 +4,11 @@ import jwt
 from fastapi import Depends, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from app.api.dependencies.repositories import get_user_repository
 from app.api.dependencies.services import get_jwt_service
 from app.api.errors import ApiError
 from app.domain.enums.user import UserRole
+from app.domain.repositories.user_repository import UserRepository
 from app.domain.services.jwt_service import JwtService
 
 # auto_error=False: sem token devolvemos 401 (o padrão do FastAPI é 403)
@@ -26,9 +28,10 @@ def _forbidden(message: str) -> ApiError:
     return ApiError(status.HTTP_403_FORBIDDEN, message, code="FORBIDDEN")
 
 
-def get_current_user(
+async def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
     jwt_service: JwtService = Depends(get_jwt_service),
+    user_repository: UserRepository = Depends(get_user_repository),
 ) -> dict:
     if credentials is None:
         raise _unauthorized("Não autenticado.")
@@ -42,13 +45,23 @@ def get_current_user(
 
     # token assinado mas com conteúdo inesperado também é inválido
     try:
-        return {
-            "id": UUID(str(payload["user_id"])),
-            "email": payload.get("user_email"),
-            "role": UserRole(payload["role"]).value,
-        }
+        user_id = UUID(str(payload["user_id"]))
+        UserRole(payload["role"])
     except (KeyError, ValueError):
         raise _unauthorized("Token inválido.", "TOKEN_INVALID")
+
+    # O token é conferido contra o banco (uma busca por chave primária):
+    # conta removida perde o acesso na hora, e o perfil vale o que está no banco,
+    # não o que estava no token (perfil rebaixado não mantém privilégios até expirar).
+    user = await user_repository.get_by_id(user_id)
+    if user is None:
+        raise _unauthorized("Token inválido.", "TOKEN_INVALID")
+
+    return {
+        "id": user.id,
+        "email": user.email,
+        "role": UserRole(user.role).value,
+    }
 
 
 def get_current_teacher(current_user: dict = Depends(get_current_user)) -> dict:

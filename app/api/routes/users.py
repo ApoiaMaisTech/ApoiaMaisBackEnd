@@ -30,13 +30,15 @@ from app.api.errors import ERROR_404, ERROR_409, ApiError
 router = APIRouter()
 
 # Matriz de autorização (testada em tests/integration/api/test_authorization_matrix.py):
-#   rota                    anônimo  aluno           professor
-#   POST /students          401      403             201
-#   POST /teachers          401      403             201
-#   GET  /                  401      403             200
-#   GET  /{id}              401      só o próprio    200
-#   PUT  /{id}              401      só o próprio    só o próprio
-#   DELETE /{id}            401      403             só contas de aluno
+#   rota                    anônimo  aluno         professor       admin         médico
+#   POST /students          401      403           201             403           403
+#   POST /teachers          401      403           201             403           403
+#   GET  /                  401      403           200             403           403
+#   GET  /{id}              401      só o próprio  200             só o próprio  só o próprio
+#   PUT  /{id}              401      só o próprio  só o próprio    só o próprio  só o próprio
+#   DELETE /{id}            401      403           só alunos       403           403
+# Admin e médico ainda não têm regras próprias: negar por padrão até existirem.
+# O perfil considerado é o do banco (get_current_user), não o que veio no token.
 
 limit_user_creation = Depends(rate_limit("user-creation", settings.RATE_LIMIT_USER_CREATION))
 

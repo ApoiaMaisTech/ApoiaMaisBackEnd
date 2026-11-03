@@ -25,11 +25,11 @@ from app.domain.enums.user import UserRole
 
 router = APIRouter()
 
-# Matriz de autorização (testada em tests/integration/api/test_ai_images_routes.py):
-#   rota                                   anônimo  aluno  professor
-#   POST /stages/{id}/illustration         401      ok     ok
-#   GET  /ai-images/{id}                   401      ok     ok
-#   GET  /ai-images/{id}/content           401      ok     ok
+# Matriz de autorização (testada em tests/integration/api/test_authorization_matrix.py):
+#   rota                                   anônimo  aluno  professor  admin  médico
+#   POST /stages/{id}/illustration         401      ok     ok         403    403
+#   GET  /ai-images/{id}                   401      ok     ok         ok     ok
+#   GET  /ai-images/{id}/content           401      ok     ok         ok     ok
 # As ilustrações são da fase (conteúdo do jogo), não da criança.
 
 can_request = require_roles(UserRole.STUDENT, UserRole.TEACHER)
