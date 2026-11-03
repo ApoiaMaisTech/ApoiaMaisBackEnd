@@ -49,6 +49,8 @@ _PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]+"), "Bearer [redacted]"),
     (re.compile(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+"), "[jwt]"),
     (re.compile(r"\b(?:pbkdf2|argon2|bcrypt|scrypt)[^\s'\",)]*\$[^\s'\",)]+"), "[hash]"),
+    # formato do PasswordServiceImpl: <salt hex 32>$<pbkdf2 hex 64>
+    (re.compile(r"\b[0-9a-f]{32}\$[0-9a-f]{64}\b"), "[hash]"),
     (re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"), "[email]"),
     (re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b"), "[cpf]"),
 )

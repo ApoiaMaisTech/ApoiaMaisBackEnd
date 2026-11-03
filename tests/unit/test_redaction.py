@@ -22,8 +22,9 @@ HASH = "pbkdf2_sha256$600000$c2FsdA$aGFzaA"
         (f"token={JWT}", JWT, "[jwt]"),
         (f"hash {HASH} inválido", HASH, "[hash]"),
         ("cpf 123.456.789-09 duplicado", "123.456.789-09", "[cpf]"),
+        ("hash " + "ab" * 16 + "$" + "cd" * 32 + " salvo", "cd" * 32, "[hash]"),
     ],
-    ids=["email", "bearer", "jwt", "hash-de-senha", "cpf"],
+    ids=["email", "bearer", "jwt", "hash-de-senha", "cpf", "hash-do-projeto"],
 )
 def test_texto_livre_e_limpo(text, leak, marker):
     cleaned = redact_text(text)

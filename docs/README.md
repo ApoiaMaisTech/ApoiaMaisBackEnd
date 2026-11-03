@@ -9,6 +9,7 @@ docs/
 ├── ARQUITETURA.md    Arquitetura, mensageria e decisões (FastAPI + workers)
 ├── ERROS.md          Formato de erro da API, códigos e regras de validação
 ├── LGPD.md           Inventário de dados pessoais, retenção, controles e pendências
+├── PERFORMANCE.md    Linha de base de latência/vazão, consultas, metas e achados
 └── images/
     └── demo.gif      Demonstração visual usada no README principal
 ```
@@ -30,6 +31,7 @@ A documentação da arquitetura fica junto do código, em um README por pasta:
 | Testes | [`../tests/README.md`](../tests/README.md) |
 | Erros e validação da API | [`ERROS.md`](ERROS.md) |
 | LGPD (dados pessoais, retenção, controles) | [`LGPD.md`](LGPD.md) |
+| Performance (linha de base, metas, como medir) | [`PERFORMANCE.md`](PERFORMANCE.md) |
 
 O contrato OpenAPI publicado fica no repositório de integração ([ApoiaMaisTech/ApoiaMais](https://github.com/ApoiaMaisTech/ApoiaMais)), em `contratos/auth-service.yaml`.
 

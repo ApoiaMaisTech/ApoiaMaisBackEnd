@@ -24,6 +24,7 @@ The main API is built with **Python and FastAPI**, following **Clean Architectur
 * Go worker for AI image generation (fake provider by default, OpenAI optional)
 * Structured JSON logs with `X-Correlation-ID` propagated across services
 * Standardized API error responses with stable error codes
+* Performance baseline, targets and a reproducible benchmark ([docs/PERFORMANCE.md](./docs/PERFORMANCE.md))
 * LGPD controls: log redaction, JWT data minimization, automatic data retention ([docs/LGPD.md](./docs/LGPD.md))
 * Unit and integration tests
 * OpenAPI contract generation

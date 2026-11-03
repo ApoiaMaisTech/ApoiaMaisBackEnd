@@ -1,3 +1,4 @@
+import asyncio
 from app.application.dto.update_user_request import UpdateUserRequest
 from app.domain.repositories.user_repository import UserRepository
 from app.application.dto.create_user_response import UserResponse
@@ -29,7 +30,8 @@ class UpdateUserUseCase:
         
         # atualiza o usuario com os novos dados
         user.email = request.email
-        user.password_hash = self.password_service.hash(request.password)
+        # PBKDF2 é CPU puro: fora do event loop (ver docs/PERFORMANCE.md)
+        user.password_hash = await asyncio.to_thread(self.password_service.hash, request.password)
 
         updated_user =await self.repository.update(user)
 
