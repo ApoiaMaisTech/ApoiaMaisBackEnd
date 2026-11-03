@@ -38,7 +38,12 @@ func TestExemplosDoContratoSaoAceitos(t *testing.T) {
 		}
 		target, ok := payloads[env.EventType]
 		if !ok {
-			t.Fatalf("%s: tipo sem struct: %s", f, env.EventType)
+			// eventos de outros serviços (ex.: evaluation.* do rust-evaluator): o envelope
+			// é comum e foi validado acima; o payload não é deste worker
+			if strings.HasPrefix(env.EventType, "ai.image.") {
+				t.Fatalf("%s: tipo sem struct: %s", f, env.EventType)
+			}
+			continue
 		}
 		if err := DecodeStrict(env.Payload, target); err != nil {
 			t.Fatalf("%s: payload: %v", f, err)

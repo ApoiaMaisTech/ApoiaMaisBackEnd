@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "evaluation.completed v1 (rust-evaluator -> API)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evaluation_id", "total_items", "correct_items", "score", "items", "engine", "engine_version"],
+  "properties": {
+    "evaluation_id": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+    "total_items": {"type": "integer", "minimum": 1, "maximum": 200},
+    "correct_items": {"type": "integer", "minimum": 0, "maximum": 200},
+    "score": {"type": "number", "minimum": 0, "maximum": 1},
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["item_id", "correct", "score"],
+        "properties": {
+          "item_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$"},
+          "correct": {"type": "boolean"},
+          "score": {"type": "number", "minimum": 0, "maximum": 1}
+        }
+      }
+    },
+    "engine": {"type": "string", "minLength": 1, "maxLength": 50},
+    "engine_version": {"type": "string", "minLength": 1, "maxLength": 50}
+  }
+}

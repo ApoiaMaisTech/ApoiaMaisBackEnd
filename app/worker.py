@@ -1,4 +1,5 @@
-"""Worker da API: publica o outbox no RabbitMQ e consome os resultados dos jobs.
+"""Worker da API: publica o outbox no RabbitMQ e consome os resultados dos jobs
+(ilustrações do go-worker e avaliações do rust-evaluator).
 
 Roda na mesma imagem da API, como outro processo:
     python -m app.worker               # executa
@@ -20,6 +21,10 @@ from app.infrastructure.database.retention import apply_retention
 from app.infrastructure.database.session import AsyncSessionLocal
 from app.infrastructure.messaging.consumer import EventConsumer
 from app.infrastructure.messaging.handlers.ai_image_results import QUEUE_NAME, AiImageResultHandlers
+from app.infrastructure.messaging.handlers.evaluation_results import (
+    QUEUE_NAME as EVALUATION_QUEUE_NAME,
+    EvaluationResultHandlers,
+)
 from app.infrastructure.messaging.outbox import OutboxRelay
 from app.infrastructure.messaging.publisher import RabbitPublisher
 
@@ -51,14 +56,14 @@ async def _maybe_apply_retention(last_run: float | None) -> float | None:
     return now
 
 
-async def _relay_loop(relay: OutboxRelay, consumer: EventConsumer, stop: asyncio.Event) -> None:
+async def _relay_loop(relay: OutboxRelay, consumers: list[EventConsumer], stop: asyncio.Event) -> None:
     last_retention: float | None = None
     while not stop.is_set():
         last_retention = await _maybe_apply_retention(last_retention)
         try:
             published = await relay.run_once()
-            # só se declara vivo se o banco respondeu e o consumidor está conectado
-            if consumer.is_connected:
+            # só se declara vivo se o banco respondeu e todos os consumidores estão conectados
+            if all(consumer.is_connected for consumer in consumers):
                 HEARTBEAT_FILE.touch()
             if published:
                 continue  # ainda pode haver fila no outbox
@@ -82,23 +87,29 @@ async def run() -> None:
     publisher = RabbitPublisher(settings.RABBITMQ_URL)
     await publisher.connect()
 
-    consumer = EventConsumer(
-        settings.RABBITMQ_URL,
-        QUEUE_NAME,
-        AiImageResultHandlers(AsyncSessionLocal).handlers(),
-        max_retries=settings.MESSAGING_MAX_RETRIES,
-        prefetch=settings.MESSAGING_PREFETCH,
-    )
-    consumer_task = asyncio.create_task(consumer.run(stop))
+    consumers = [
+        EventConsumer(
+            settings.RABBITMQ_URL,
+            queue_name,
+            handlers,
+            max_retries=settings.MESSAGING_MAX_RETRIES,
+            prefetch=settings.MESSAGING_PREFETCH,
+        )
+        for queue_name, handlers in (
+            (QUEUE_NAME, AiImageResultHandlers(AsyncSessionLocal).handlers()),
+            (EVALUATION_QUEUE_NAME, EvaluationResultHandlers(AsyncSessionLocal).handlers()),
+        )
+    ]
+    consumer_tasks = [asyncio.create_task(consumer.run(stop)) for consumer in consumers]
 
     relay = OutboxRelay(AsyncSessionLocal, publisher, batch_size=settings.OUTBOX_BATCH_SIZE)
     logger.info("worker iniciado")
     try:
-        await _relay_loop(relay, consumer, stop)
+        await _relay_loop(relay, consumers, stop)
     finally:
         logger.info("encerrando worker")
         stop.set()
-        await consumer_task
+        await asyncio.gather(*consumer_tasks)
         await publisher.close()
 
 

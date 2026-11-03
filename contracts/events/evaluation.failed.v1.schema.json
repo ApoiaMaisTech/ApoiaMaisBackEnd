@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "evaluation.failed v1 (rust-evaluator -> API)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evaluation_id", "error_code"],
+  "properties": {
+    "evaluation_id": {"type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+    "error_code": {"type": "string", "pattern": "^[a-z_]{1,50}$"},
+    "error_message": {"type": "string", "maxLength": 500},
+    "retryable": {"type": "boolean"}
+  }
+}

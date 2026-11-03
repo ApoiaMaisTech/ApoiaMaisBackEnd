@@ -1,4 +1,5 @@
-"""Topologia do RabbitMQ (espelhada em workers/go-worker/internal/broker/topology.go).
+"""Topologia do RabbitMQ (espelhada em workers/go-worker/internal/broker/topology.go
+e workers/rust-evaluator/src/topology.rs).
 
 - apoiamais.events (topic): todos os eventos; routing key = event_type.
   Mensagem sem fila de destino vai para apoiamais.unrouted (alternate exchange),
@@ -8,7 +9,7 @@
     <fila>.retry.<ms>      TTL; ao expirar volta para <fila> pelo default exchange
     <fila>.dlq             mensagens que esgotaram as tentativas ou são inválidas
 
-Os argumentos precisam ser idênticos em Python e Go: o RabbitMQ recusa
+Os argumentos precisam ser idênticos em Python, Go e Rust: o RabbitMQ recusa
 (PRECONDITION_FAILED) redeclarar fila/exchange com argumentos diferentes.
 """
 import aio_pika

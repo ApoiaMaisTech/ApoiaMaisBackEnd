@@ -1,0 +1,18 @@
+{
+  "event_id": "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b",
+  "event_type": "evaluation.requested",
+  "version": 1,
+  "occurred_at": "2026-11-03T12:00:00Z",
+  "producer": "apoiamais-api",
+  "correlation_id": "req-7c1e4b",
+  "job_id": "0b8f3c2a-1d4e-4f5a-9b6c-7d8e9f0a1b2c",
+  "payload": {
+    "evaluation_id": "0b8f3c2a-1d4e-4f5a-9b6c-7d8e9f0a1b2c",
+    "items": [
+      {"item_id": "palavra-1", "kind": "text", "answer": ["Caza"], "expected": ["casa"], "max_typos": 1},
+      {"item_id": "acento-1", "kind": "text", "answer": ["avo"], "expected": ["avó"]},
+      {"item_id": "vogais-1", "kind": "choice", "answer": ["a", "e", "b"], "expected": ["a", "e", "i"]},
+      {"item_id": "contagem-1", "kind": "number", "answer": ["3,0"], "expected": ["3"]}
+    ]
+  }
+}

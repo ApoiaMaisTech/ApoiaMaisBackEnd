@@ -22,6 +22,7 @@ The main API is built with **Python and FastAPI**, following **Clean Architectur
 * Redis integration for distributed rate limiting
 * RabbitMQ messaging with transactional outbox, retry with backoff, DLQ and idempotent consumers
 * Go worker for AI image generation (fake provider by default, OpenAI optional)
+* Rust worker for deterministic activity evaluation ([workers/rust-evaluator](./workers/rust-evaluator))
 * Structured JSON logs with `X-Correlation-ID` propagated across services
 * Standardized API error responses with stable error codes
 * Performance baseline, targets and a reproducible benchmark ([docs/PERFORMANCE.md](./docs/PERFORMANCE.md))
@@ -128,6 +129,7 @@ ApoiaMaisBackEnd/
 | Redis          | Rate limiting; job locks and AI budget (Go worker) |
 | RabbitMQ       | Asynchronous jobs and events   |
 | Go             | AI image worker                |
+| Rust           | Activity evaluation worker     |
 | JWT            | Authentication                 |
 | Docker         | Containerization               |
 | Pytest         | Automated testing              |

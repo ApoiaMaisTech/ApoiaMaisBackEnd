@@ -10,7 +10,6 @@ from uuid import UUID
 
 from pydantic import ValidationError
 from sqlalchemy import update
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.application.events.ai_image import (
@@ -24,9 +23,9 @@ from app.application.events.ai_image import (
 from app.application.events.envelope import EventEnvelope
 from app.domain.enums.ai_image import AiImageStatus
 from app.infrastructure.database.models.ludic.ai_image_model import AiImageModel
-from app.infrastructure.database.models.messaging.processed_event_model import ProcessedEventModel
 from app.infrastructure.database.types import utcnow
 from app.infrastructure.messaging.consumer import Handler, PermanentError
+from app.infrastructure.messaging.inbox import process_once
 
 logger = logging.getLogger("apoiamais.ai_image_results")
 
@@ -46,12 +45,6 @@ def _parse(model, envelope: EventEnvelope):
     return payload
 
 
-def _is_processed_marker_conflict(exc: IntegrityError) -> bool:
-    # 1062 = chave duplicada; só conta como duplicata se for a chave do inbox
-    args = getattr(exc.orig, "args", ())
-    return bool(args) and args[0] == 1062 and "processed_event.PRIMARY" in str(exc.orig)
-
-
 class AiImageResultHandlers:
     def __init__(self, session_factory: async_sessionmaker):
         self._session_factory = session_factory
@@ -64,27 +57,7 @@ class AiImageResultHandlers:
         }
 
     async def _run(self, envelope: EventEnvelope, apply) -> None:
-        # A marca de "processado" é gravada ANTES da alteração, na mesma transação.
-        # Duas entregas simultâneas do mesmo evento (reentrega com prefetch > 1, retry,
-        # réplicas do worker): o InnoDB trava a chave e a segunda espera o commit da
-        # primeira; depois recebe chave duplicada e é tratada como duplicata (ack),
-        # não como erro temporário. Se a primeira falhar, a segunda processa.
-        async with self._session_factory() as session:
-            try:
-                async with session.begin():
-                    session.add(
-                        ProcessedEventModel(
-                            consumer=CONSUMER_NAME,
-                            event_id=str(envelope.event_id),
-                            event_type=envelope.event_type,
-                        )
-                    )
-                    await session.flush()
-                    await apply(session)
-            except IntegrityError as exc:
-                if not _is_processed_marker_conflict(exc):
-                    raise
-                logger.info("evento duplicado ignorado")
+        await process_once(self._session_factory, CONSUMER_NAME, envelope, apply)
 
     async def on_started(self, envelope: EventEnvelope) -> None:
         payload = _parse(AiImageStartedV1, envelope)
