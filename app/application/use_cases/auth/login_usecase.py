@@ -1,3 +1,4 @@
+import asyncio
 from app.domain.enums.user import UserRole  
 from app.application.dto.login_request import LoginRequest
 from app.application.dto.token_response import TokenResponse, UserData
@@ -21,11 +22,12 @@ class LoginUseCase:
             raise InvalidCredentialsException()
 
         # verifica se a senha esta correta
-        if not self.password_service.verify(request.password, user.password_hash):
+        # PBKDF2 é CPU puro (~80 ms): fora do event loop, senão trava todas as requisições
+        if not await asyncio.to_thread(self.password_service.verify, request.password, user.password_hash):
             raise InvalidCredentialsException()
 
         # gera o token de acesso
-        access_token = self.jwt_service.generate_token(user.id, user.email, user.role)
+        access_token = self.jwt_service.generate_token(user.id, user.role)
 
         role_value = user.role.value if isinstance(user.role, UserRole ) else user.role
 

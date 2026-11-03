@@ -23,7 +23,9 @@ The main API is built with **Python and FastAPI**, following **Clean Architectur
 * RabbitMQ messaging with transactional outbox, retry with backoff, DLQ and idempotent consumers
 * Go worker for AI image generation (fake provider by default, OpenAI optional)
 * Structured JSON logs with `X-Correlation-ID` propagated across services
-* Standardized API error responses
+* Standardized API error responses with stable error codes
+* Performance baseline, targets and a reproducible benchmark ([docs/PERFORMANCE.md](./docs/PERFORMANCE.md))
+* LGPD controls: log redaction, JWT data minimization, automatic data retention ([docs/LGPD.md](./docs/LGPD.md))
 * Unit and integration tests
 * OpenAPI contract generation
 * Automated contract synchronization
@@ -108,9 +110,7 @@ ApoiaMaisBackEnd/
 ├── contratos.json
 ├── docker-compose.yml
 ├── Dockerfile
-├── Dockerfile.db
 ├── .env.example
-├── init_db.sh
 ├── main.py
 ├── pytest.ini
 └── requirements.txt
@@ -277,10 +277,15 @@ API errors follow a standardized response format:
 ```json
 {
   "success": false,
-  "message": "Error message",
-  "errors": []
+  "code": "VALIDATION_ERROR",
+  "message": "Dados inválidos.",
+  "errors": ["email: value is not a valid email address"],
+  "correlation_id": "4f9c2b7e1a3d4c5b8e6f7a8b9c0d1e2f"
 }
 ```
+
+`code` is the stable contract for clients; `message` is display text only. The full list of
+codes and the input validation rules are in [`docs/ERROS.md`](./docs/ERROS.md) (Portuguese).
 
 Domain exceptions are defined separately from HTTP handling:
 

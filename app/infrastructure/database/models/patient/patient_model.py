@@ -19,9 +19,10 @@ class PatientModel(Base, TimestampMixin):
         index=True
     )
 
+    # mesmo tipo de guardian.id (CHAR(32)); ver migration b7e2d4f1c9a3
     guardian_id: Mapped[UUID | None] = mapped_column(
-        String(36),
-        ForeignKey("guardian.id", ondelete="SET NULL"),
+        Uuid,
+        ForeignKey("guardian.id", ondelete="SET NULL", name="fk_patient_guardian_id"),
         nullable=True,
         index=True
     )

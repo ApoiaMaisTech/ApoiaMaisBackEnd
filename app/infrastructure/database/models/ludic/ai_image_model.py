@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import BigInteger, Enum, ForeignKey, String, Text, Uuid, text
+from sqlalchemy import BigInteger, Enum, ForeignKey, Index, String, Text, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.domain.enums.ai_image import AiImageStatus
@@ -13,6 +13,12 @@ class AiImageModel(Base):
     """Metadados de uma ilustração gerada por IA. O binário fica no storage."""
 
     __tablename__ = "ai_image"
+    # declarados aqui para o autogenerate não propor removê-los (criados na a1f3c9e2b7d4)
+    __table_args__ = (
+        Index("ix_ai_image_stage_hash", "stage_id", "prompt_hash"),
+        Index("ix_ai_image_requested_by", "requested_by_user_id", "created_at"),
+        Index("ix_ai_image_status", "status"),
+    )
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     stage_id: Mapped[UUID] = mapped_column(

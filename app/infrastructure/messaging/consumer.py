@@ -8,6 +8,7 @@ from aio_pika.abc import AbstractChannel, AbstractConnection, AbstractIncomingMe
 from pydantic import ValidationError
 
 from app.application.events.envelope import EventEnvelope
+from app.core.redaction import safe_error_text
 from app.infrastructure.messaging.topology import (
     DLX_EXCHANGE,
     ERROR_HEADER,
@@ -42,6 +43,7 @@ class EventConsumer:
     - erro temporário: republica em <fila>.retry.<delay> com x-retry-count+1 e dá ack
     - erro permanente ou tentativas esgotadas: republica na DLQ e dá ack
     - falha ao republicar: nack com requeue (x-delivery-limit da fila quorum limita o loop)
+    - encerramento: para de receber, espera as mensagens em andamento (drain) e só então fecha
     Os handlers precisam ser idempotentes: a mesma mensagem pode chegar mais de uma vez.
     """
 
@@ -52,15 +54,22 @@ class EventConsumer:
         handlers: dict[tuple[str, int], Handler],
         max_retries: int = 3,
         prefetch: int = 10,
+        drain_timeout: float = 15.0,
     ):
         self._url = url
         self.queue_name = queue_name
         self._handlers = handlers
         self._max_retries = max_retries
         self._prefetch = prefetch
+        self._drain_timeout = drain_timeout
         self._connection: AbstractConnection | None = None
         self._channel: AbstractChannel | None = None
+        self._queue = None
+        self._consumer_tag: str | None = None
         self._consuming = False
+        self._inflight = 0
+        self._idle = asyncio.Event()
+        self._idle.set()
 
     @property
     def bindings(self) -> list[str]:
@@ -76,7 +85,8 @@ class EventConsumer:
         self._channel = await self._connection.channel(publisher_confirms=True)
         await self._channel.set_qos(prefetch_count=self._prefetch)
         queue = await declare_consumer_queue(self._channel, self.queue_name, self.bindings)
-        await queue.consume(self.on_message)
+        self._queue = queue
+        self._consumer_tag = await queue.consume(self.on_message)
         self._consuming = True
         logger.info("consumidor iniciado", extra={"queue": self.queue_name})
 
@@ -108,7 +118,36 @@ class EventConsumer:
                 pass
             backoff = min(backoff * 2, 30.0)
 
+    @property
+    def inflight(self) -> int:
+        return self._inflight
+
     async def close(self) -> None:
+        """Para de receber, espera as mensagens em andamento (até drain_timeout) e fecha.
+
+        As que ainda estavam só no prefetch (não começaram) voltam para a fila sozinhas
+        quando o canal fecha. Se o tempo acabar, as em andamento também voltam
+        (não houve ack) e serão reentregues: os handlers são idempotentes.
+        """
+        queue, tag = self._queue, self._consumer_tag
+        self._queue, self._consumer_tag = None, None
+        connected = self._connection is not None and not self._connection.is_closed
+        if queue is not None and tag is not None and connected:
+            try:
+                await queue.cancel(tag)
+            except Exception:
+                logger.debug("erro ao cancelar o consumo", exc_info=True)
+        # sem conexão não há como dar ack: esperar não adianta (serão reentregues)
+        if self._inflight and connected:
+            logger.info("aguardando mensagens em andamento", extra={"inflight": self._inflight})
+            try:
+                await asyncio.wait_for(self._idle.wait(), timeout=self._drain_timeout)
+            except asyncio.TimeoutError:
+                logger.warning(
+                    "tempo de drain esgotado; mensagens em andamento serão reentregues",
+                    extra={"inflight": self._inflight},
+                )
+
         connection, self._connection = self._connection, None
         if connection is not None and not connection.is_closed:
             try:
@@ -125,6 +164,16 @@ class EventConsumer:
         )
 
     async def on_message(self, message: AbstractIncomingMessage) -> None:
+        self._inflight += 1
+        self._idle.clear()
+        try:
+            await self._process(message)
+        finally:
+            self._inflight -= 1
+            if self._inflight == 0:
+                self._idle.set()
+
+    async def _process(self, message: AbstractIncomingMessage) -> None:
         retry_count = retry_count_of(message)
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(
@@ -146,7 +195,7 @@ class EventConsumer:
             structlog.contextvars.bind_contextvars(event_type=envelope.event_type)
             await handler(envelope)
         except PermanentError as exc:
-            logger.error("evento inválido enviado para a DLQ", extra={"error": str(exc)})
+            logger.error("evento inválido enviado para a DLQ", extra={"error": safe_error_text(exc)})
             await self._dead_letter(message, retry_count, exc)
         except Exception as exc:
             if retry_count >= self._max_retries:
@@ -202,4 +251,5 @@ class EventConsumer:
 
 
 def _short(exc: Exception) -> str:
-    return f"{type(exc).__name__}: {exc}"[:300]
+    # vai no header x-last-error, que fica guardado no RabbitMQ (retry e DLQ)
+    return safe_error_text(exc, 300)

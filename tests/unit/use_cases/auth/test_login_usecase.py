@@ -39,7 +39,7 @@ async def test_login_success():
 
     assert result.token == "token"
     assert result.user.role == "student"
-    jwt_service.generate_token.assert_called_once_with(user.id, user.email, user.role)
+    jwt_service.generate_token.assert_called_once_with(user.id, user.role)
 
 
 @pytest.mark.asyncio

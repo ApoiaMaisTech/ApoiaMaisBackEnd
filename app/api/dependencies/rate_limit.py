@@ -1,6 +1,7 @@
-from fastapi import HTTPException, Request, Response, status
+from fastapi import Request, Response, status
 
 from app.api.dependencies.services import get_jwt_service
+from app.api.errors import ApiError
 from app.core.config import settings
 from app.infrastructure.rate_limit import build_rate_limiter, parse_rate
 
@@ -40,9 +41,10 @@ def rate_limit(scope: str, rate: str, per_user: bool = True):
         identity = _client_identity(request) if per_user else f"ip:{_client_ip(request)}"
         result = await rate_limiter.hit(f"{scope}:{identity}", parsed)
         if not result.allowed:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Muitas requisições. Tente novamente mais tarde.",
+            raise ApiError(
+                status.HTTP_429_TOO_MANY_REQUESTS,
+                "Muitas requisições. Tente novamente mais tarde.",
+                code="RATE_LIMITED",
                 headers={"Retry-After": str(result.retry_after)},
             )
         response.headers["X-RateLimit-Limit"] = str(parsed.limit)

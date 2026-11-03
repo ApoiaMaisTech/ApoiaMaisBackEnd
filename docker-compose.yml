@@ -31,7 +31,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
       MYSQL_DATABASE: "ApoiaMaisDB"
-      MYSQL_USER: app
+      # mesmo usuário que api, api-worker e migrate usam (DB_USER no .env; não use "root")
+      MYSQL_USER: "${DB_USER}"
       MYSQL_PASSWORD: "${DB_PASSWORD}"
     volumes:
       - db_data:/var/lib/mysql

@@ -2,8 +2,6 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 import jwt
-from pydantic import EmailStr
-
 from app.domain.enums.user import UserRole
 from app.domain.services.jwt_service import JwtService
 
@@ -17,11 +15,11 @@ class JwtServiceImpl(JwtService):
         self.algorithm = algorithm
         self.expiration_minutes = expiration_minutes
 
-    def generate_token(self, user_id: UUID, user_email: EmailStr, role: UserRole) -> str:
+    def generate_token(self, user_id: UUID, role: UserRole) -> str:
         now = datetime.now(timezone.utc)
+        # sem email/nome: o payload é legível (base64) por quem tiver o token
         payload = {
             "user_id": str(user_id),
-            "user_email": str(user_email),
             "role": role.value if isinstance(role, UserRole) else role,
             "iat": now,
             "exp": now + timedelta(minutes=self.expiration_minutes),

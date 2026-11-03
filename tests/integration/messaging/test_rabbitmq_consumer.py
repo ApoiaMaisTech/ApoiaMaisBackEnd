@@ -229,3 +229,64 @@ async def test_consumidor_volta_a_consumir_depois_de_perder_a_conexao(broker):
         stop.set()
         await asyncio.wait_for(task, timeout=10)
         await publisher.close()
+
+
+@pytest.mark.asyncio
+async def test_encerramento_espera_a_mensagem_em_andamento(broker):
+    started, release = asyncio.Event(), asyncio.Event()
+    finished = []
+
+    async def slow_handler(envelope):
+        started.set()
+        await release.wait()
+        finished.append(envelope.event_id)
+
+    consumer, publisher, queue_name = await _start_consumer(broker, slow_handler)
+    try:
+        event = _event()
+        await _publish(publisher, event)
+        await asyncio.wait_for(started.wait(), timeout=5)
+
+        closing = asyncio.create_task(consumer.close())
+        await asyncio.sleep(0.3)
+        assert not closing.done(), "fechou com mensagem em andamento"
+
+        release.set()
+        await asyncio.wait_for(closing, timeout=5)
+
+        assert finished == [event.event_id]
+        # recebeu ack antes de fechar: nada volta para a fila
+        queue = await broker[0].declare_queue(queue_name, passive=True)
+        assert queue.declaration_result.message_count == 0
+    finally:
+        release.set()
+        await consumer.close()
+        await publisher.close()
+
+
+@pytest.mark.asyncio
+async def test_drain_tem_limite_de_tempo_e_a_mensagem_e_reentregue(broker):
+    started = asyncio.Event()
+
+    async def stuck_handler(envelope):
+        started.set()
+        await asyncio.sleep(30)
+
+    channel, queues = broker
+    queue_name = f"test.{uuid4().hex[:8]}"
+    queues.append(queue_name)
+    consumer = EventConsumer(RABBITMQ_URL, queue_name, {(AI_IMAGE_STARTED, 1): stuck_handler}, drain_timeout=0.5)
+    await consumer.start()
+    publisher = RabbitPublisher(RABBITMQ_URL)
+    await publisher.connect()
+    try:
+        await _publish(publisher, _event())
+        await asyncio.wait_for(started.wait(), timeout=5)
+
+        await asyncio.wait_for(consumer.close(), timeout=5)
+
+        # sem ack: a mensagem volta para a fila e outro consumidor a processa
+        message = await _get(channel, queue_name)
+        assert message is not None
+    finally:
+        await publisher.close()

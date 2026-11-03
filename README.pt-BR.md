@@ -58,7 +58,11 @@ docker compose exec api python -m scripts.criar_usuario --role teacher --nome "P
 
 A matriz de quem acessa cada rota está no topo de `app/api/routes/users.py` e é verificada por `tests/integration/api/test_authorization_matrix.py`. Os limites (`RATE_LIMIT_DEFAULT`, `RATE_LIMIT_LOGIN`, `RATE_LIMIT_USER_CREATION`, `RATE_LIMIT_AI_IMAGE`) são configurados no `.env` e contam por usuário autenticado (no hospital vários tablets saem pelo mesmo IP); sem token, e no login, contam por IP; com `REDIS_URL` definido os contadores ficam no Redis, sem ele ficam em memória (vale só para um processo). Ao estourar o limite a API responde `429` com o cabeçalho `Retry-After`.
 
-Todas as respostas de erro seguem o formato `{"success": false, "message": "...", "errors": [...]}`. Toda resposta traz `X-Correlation-ID` (o mesmo valor aparece nos logs da API e dos workers).
+Todas as respostas de erro seguem o formato `{"success": false, "code": "...", "message": "...", "errors": [...], "correlation_id": "..."}`; o `code` é o contrato estável (lista completa e regras de validação em [`docs/ERROS.md`](./docs/ERROS.md)). Toda resposta traz `X-Correlation-ID` (o mesmo valor aparece nos logs da API e dos workers).
+
+Mensagens que esgotaram as tentativas ficam na DLQ e podem ser reprocessadas depois de corrigir a causa: `docker compose run --rm api-worker python -m scripts.reprocessar_dlq --fila apoiamais-api.ai-image-results --listar` (sem `--listar`, reprocessa). Veja [`docs/ARQUITETURA.md`](./docs/ARQUITETURA.md#garantias).
+
+Dados pessoais (LGPD): logs passam por limpeza automática de dados sensíveis, o token não carrega e-mail e o `api-worker` aplica a política de retenção (`RETENTION_*`). Inventário, prazos e pendências em [`docs/LGPD.md`](./docs/LGPD.md).
 
 ### Ilustrações por IA no jogo
 

@@ -164,4 +164,82 @@ def test_login_nao_revela_se_o_email_existe(client, make_user):
     )
 
     assert senha_errada.status_code == email_inexistente.status_code == 401
-    assert senha_errada.json() == email_inexistente.json()
+    # tirando o correlation_id (único por requisição), as respostas são idênticas
+    sem_id = lambda r: {k: v for k, v in r.json().items() if k != "correlation_id"}
+    assert sem_id(senha_errada) == sem_id(email_inexistente)
+    assert sem_id(senha_errada)["code"] == "INVALID_CREDENTIALS"
+
+
+# --- normalização de entrada (issue #32) -------------------------------------
+
+def test_criacao_normaliza_nome_e_email(client, make_user, repo):
+    teacher = make_user(UserRole.TEACHER)
+
+    response = client.post(
+        "/api/users/students",
+        json={"name": "  Ana   Maria  ", "email": "  Ana.Maria@Example.COM ", "password": "  senha com espaço  "},
+        headers=auth_header(teacher),
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["name"] == "Ana Maria"
+    assert body["email"] == "ana.maria@example.com"
+
+    # a senha não é alterada: espaços fazem parte dela
+    login = client.post(
+        "/api/auth/login",
+        json={"email": "ANA.MARIA@example.com", "password": "  senha com espaço  "},
+    )
+    assert login.status_code == 200, login.text
+
+
+def test_email_com_caixa_diferente_e_duplicado(client, make_user):
+    teacher = make_user(UserRole.TEACHER)
+    make_user(UserRole.STUDENT, email="joana@example.com")
+
+    response = client.post(
+        "/api/users/students",
+        json={"name": "Joana", "email": "JOANA@example.com", "password": "senha-nova-123"},
+        headers=auth_header(teacher),
+    )
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "EMAIL_ALREADY_EXISTS"
+
+
+import pytest  # noqa: E402
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["   ", "  ab  ", "a" * 101, "Nome\x00Nulo", "Linha\nQuebrada"],
+    ids=["so-espacos", "curto-apos-strip", "longo", "byte-nulo", "quebra-de-linha"],
+)
+def test_nome_invalido_e_recusado(client, make_user, repo, name):
+    teacher = make_user(UserRole.TEACHER)
+    total = len(repo.users)
+
+    response = client.post(
+        "/api/users/students",
+        json={"name": name, "email": "valido@example.com", "password": "senha-nova-123"},
+        headers=auth_header(teacher),
+    )
+
+    assert response.status_code == 422
+    assert response.json()["errors"][0].startswith("name:")
+    assert len(repo.users) == total
+
+
+def test_senha_longa_demais_e_recusada_sem_ecoar(client, make_user):
+    teacher = make_user(UserRole.TEACHER)
+    senha = "s" * 129
+
+    response = client.post(
+        "/api/users/students",
+        json={"name": "Fulano", "email": "f@example.com", "password": senha},
+        headers=auth_header(teacher),
+    )
+
+    assert response.status_code == 422
+    assert senha not in response.text

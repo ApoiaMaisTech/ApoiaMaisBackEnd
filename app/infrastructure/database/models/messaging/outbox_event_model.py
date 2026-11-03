@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Integer, String, Text, Uuid, text
+from sqlalchemy import Index, Integer, String, Text, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.infrastructure.database.base import Base
@@ -12,6 +12,8 @@ class OutboxEventModel(Base):
     """Evento a publicar, gravado na mesma transação do dado que o originou."""
 
     __tablename__ = "outbox_event"
+    # usado pelo relay (published_at IS NULL AND next_attempt_at <= agora)
+    __table_args__ = (Index("ix_outbox_event_pending", "published_at", "next_attempt_at"),)
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)  # = event_id
     event_type: Mapped[str] = mapped_column(String(100), nullable=False)

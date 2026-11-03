@@ -5,10 +5,12 @@ import structlog
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from app.api.exception_handlers import error_response
 from app.core.logging import normalize_correlation_id
 
 HEADER = "X-Correlation-ID"
 access_logger = logging.getLogger("apoiamais.access")
+error_logger = logging.getLogger("apoiamais.errors")
 _HEADER_BYTES = HEADER.lower().encode()
 
 
@@ -31,11 +33,13 @@ class CorrelationIdMiddleware:
         correlation_id = normalize_correlation_id(incoming)
 
         status_code = 500
+        response_started = False
         started = time.perf_counter()
 
         async def send_with_header(message: Message) -> None:
-            nonlocal status_code
+            nonlocal status_code, response_started
             if message["type"] == "http.response.start":
+                response_started = True
                 status_code = message["status"]
                 MutableHeaders(scope=message)[HEADER] = correlation_id
             await send(message)
@@ -44,6 +48,16 @@ class CorrelationIdMiddleware:
         structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
         try:
             await self.app(scope, receive, send_with_header)
+        except Exception:
+            # Exceção não tratada: o ServerErrorMiddleware do Starlette fica por fora deste
+            # middleware e responderia sem o X-Correlation-ID (e o log sairia sem ele).
+            # Tratamos aqui, ainda com o correlation_id no contexto.
+            error_logger.exception(
+                "Erro não tratado em %s %s", scope.get("method"), scope.get("path")
+            )
+            if response_started:
+                raise
+            await error_response(500, correlation_id=correlation_id)(scope, receive, send_with_header)
         finally:
             # log de acesso estruturado (sem query string nem corpo: podem ter dados pessoais)
             access_logger.info(

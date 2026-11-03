@@ -1,5 +1,9 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel
 
+from app.application.dto.validators import Email, NewPassword
+
+
+# só email e senha podem mudar; nome, cargo e id enviados no corpo são ignorados
 class UpdateUserRequest(BaseModel):
-    email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
+    email: Email
+    password: NewPassword

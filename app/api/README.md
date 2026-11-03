@@ -50,25 +50,28 @@ A sessão é aberta com `async with AsyncSessionLocal()` e fechada ao fim da req
 
 | Dependência           | Comportamento |
 |-----------------------|---------------|
-| `get_current_user`    | Lê o header `Authorization: Bearer <token>`, valida a assinatura e a expiração e devolve um `dict` com `id`, `email` e `role`. Responde 401 para token expirado ou inválido. |
+| `get_current_user`    | Lê o header `Authorization: Bearer <token>`, valida assinatura e expiração, **confere o usuário no banco** e devolve um `dict` com `id`, `email` e `role` (o perfil do banco, não o do token). Responde 401 para token ausente, expirado, inválido ou de conta removida. |
 | `get_current_teacher` | Exige `role == "teacher"`; caso contrário, responde 403. |
 | `get_current_student` | Exige `role == "student"`; caso contrário, responde 403. Não é usada por nenhuma rota no momento. |
 
-O token não é conferido contra o banco: um usuário removido continua com token válido até a expiração.
-
-Observação: `auth.py` define um `get_jwt_service` próprio, que instancia `JwtServiceImpl()` sem argumentos (a chave vem de `os.getenv("JWT_SECRET_KEY")`, com valor padrão). Já o login usa o `get_jwt_service` de `services.py`, que lê `settings`. As duas configurações precisam apontar para a mesma chave e o mesmo algoritmo.
+O token é conferido contra o banco a cada requisição (busca por chave primária): conta removida perde o acesso na hora e um perfil alterado vale imediatamente, sem esperar o token expirar.
 
 ## Tratamento de erros
 
-Hoje coexistem três formatos de resposta de erro:
+Todas as respostas de erro usam o formato único `ErrorResponse`
+(`success`, `code`, `message`, `errors`, `correlation_id`), produzido pelos handlers de
+`exception_handlers.py`:
 
-| Origem | Status | Corpo |
-|--------|--------|-------|
-| `DomainException` (handler global em `exception_handlers.py`) | sempre 400 | `{"success": false, "message": "...", "errors": []}` |
-| `HTTPException` lançada na rota de login ou nas dependências de auth | 401, 403 ou 404 | `{"detail": "..."}` |
-| Validação do Pydantic (padrão do FastAPI) | 422 | `{"detail": [ ... ]}` |
+| Origem | Status | `code` |
+|--------|--------|--------|
+| `DomainException` | definido na subclasse | definido na subclasse (`USER_NOT_FOUND`...) |
+| `ApiError` (`errors.py`) nas dependências de auth, rate limit e rotas | 401, 403, 429 | `UNAUTHORIZED`, `TOKEN_EXPIRED`, `FORBIDDEN`, `RATE_LIMITED`... |
+| `HTTPException` do Starlette (rota inexistente, método errado) | 404, 405 | padrão do status |
+| Validação do Pydantic | 422 | `VALIDATION_ERROR` |
+| `IntegrityError` / outros `SQLAlchemyError` | 409 / 503 | `CONFLICT` / `SERVICE_UNAVAILABLE` |
+| Exceção não tratada (capturada no `CorrelationIdMiddleware`) | 500 | `INTERNAL_ERROR` |
 
-Exceções não tratadas (por exemplo, `IntegrityError` numa inserção concorrente de e-mail duplicado) resultam em 500.
+Lista completa e regras de validação: [`docs/ERROS.md`](../../docs/ERROS.md).
 
 ## CORS
 

@@ -54,6 +54,8 @@ jobs:
       DB_NAME: ApoiaMaisDB
       JWT_SECRET_KEY: test-secret-key-for-ci
       RABBITMQ_URL: amqp://test:test@127.0.0.1:5672/
+      # tests/integration/database/test_migrations.py cria bancos descartáveis com este usuário
+      MIGRATIONS_TEST_ADMIN_URL: mysql+pymysql://root:root@127.0.0.1:3306
 
     steps:
       - name: Checkout repository
@@ -69,11 +71,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: Run migrations (upgrade, downgrade, upgrade)
+      - name: Run migrations (upgrade, downgrade, upgrade, check)
         run: |
           python -m alembic -c app/alembic.ini upgrade head
-          python -m alembic -c app/alembic.ini downgrade 4dd9c591f782
+          python -m alembic -c app/alembic.ini downgrade base
           python -m alembic -c app/alembic.ini upgrade head
+          # falha se os models divergirem das migrations (falta migration ou model errado)
+          python -m alembic -c app/alembic.ini check
 
       - name: Run tests
         run: |
@@ -139,3 +143,12 @@ jobs:
 
       - name: Build go-worker image
         run: docker build -t apoiamais-go-worker:ci workers/go-worker
+
+      # mesmo caminho do ambiente real: MySQL do compose + container migrate
+      - name: Migrations no docker compose
+        run: |
+          cp .env.example .env
+          docker compose up -d --wait mysql
+          docker compose run --rm migrate
+          docker compose run --rm migrate python -m alembic -c app/alembic.ini check
+          docker compose down -v

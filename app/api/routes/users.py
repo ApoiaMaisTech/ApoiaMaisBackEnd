@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from uuid import UUID
 
 from app.application.dto.create_user_request import CreateUserRequest
@@ -24,27 +24,31 @@ from app.api.dependencies.use_cases import (
 
 from app.api.dependencies.auth import get_current_teacher, get_current_user
 from app.api.dependencies.rate_limit import rate_limit
+from app.api.errors import ERROR_404, ERROR_409, ApiError
 
 
 router = APIRouter()
 
 # Matriz de autorização (testada em tests/integration/api/test_authorization_matrix.py):
-#   rota                    anônimo  aluno           professor
-#   POST /students          401      403             201
-#   POST /teachers          401      403             201
-#   GET  /                  401      403             200
-#   GET  /{id}              401      só o próprio    200
-#   PUT  /{id}              401      só o próprio    só o próprio
-#   DELETE /{id}            401      403             só contas de aluno
+#   rota                    anônimo  aluno         professor       admin         médico
+#   POST /students          401      403           201             403           403
+#   POST /teachers          401      403           201             403           403
+#   GET  /                  401      403           200             403           403
+#   GET  /{id}              401      só o próprio  200             só o próprio  só o próprio
+#   PUT  /{id}              401      só o próprio  só o próprio    só o próprio  só o próprio
+#   DELETE /{id}            401      403           só alunos       403           403
+# Admin e médico ainda não têm regras próprias: negar por padrão até existirem.
+# O perfil considerado é o do banco (get_current_user), não o que veio no token.
 
 limit_user_creation = Depends(rate_limit("user-creation", settings.RATE_LIMIT_USER_CREATION))
 
 
 def _ensure_self(current_user: dict, user_id: UUID) -> None:
     if current_user["id"] != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Você só pode acessar a sua própria conta.",
+        raise ApiError(
+            status.HTTP_403_FORBIDDEN,
+            "Você só pode acessar a sua própria conta.",
+            code="FORBIDDEN",
         )
 
 
@@ -54,6 +58,7 @@ def _ensure_self(current_user: dict, user_id: UUID) -> None:
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[limit_user_creation],
+    responses=ERROR_409,
 )
 async def create_student(
     request: CreateUserRequest,
@@ -72,6 +77,7 @@ async def create_student(
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[limit_user_creation],
+    responses=ERROR_409,
 )
 async def create_teacher(
     request: CreateUserRequest,
@@ -94,7 +100,7 @@ async def list_users(
 
 
 # Buscar usuário por ID
-@router.get("/{user_id}", response_model=UserResponse)
+@router.get("/{user_id}", response_model=UserResponse, responses=ERROR_404)
 async def get_user(
     user_id: UUID,
     current_user=Depends(get_current_user),
@@ -106,7 +112,7 @@ async def get_user(
 
 
 # Atualizar usuário (email e senha: só o dono da conta)
-@router.put("/{user_id}", response_model=UserResponse)
+@router.put("/{user_id}", response_model=UserResponse, responses={**ERROR_404, **ERROR_409})
 async def update_user(
     user_id: UUID,
     request: UpdateUserRequest,
@@ -121,7 +127,7 @@ async def update_user(
 
 
 # Deletar usuário (professor remove alunos; contas de professor não)
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT, responses=ERROR_404)
 async def delete_user(
     user_id: UUID,
     current_teacher=Depends(get_current_teacher),

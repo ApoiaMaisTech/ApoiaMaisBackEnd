@@ -1,3 +1,4 @@
+import asyncio
 from app.application.dto.create_user_request import CreateUserRequest
 from app.application.dto.create_user_response import UserResponse
 from app.domain.entities.user import User
@@ -24,9 +25,10 @@ class CreateUserUseCase:
         existing_user = await self.repository.get_by_email(request.email)
 
         if existing_user:
-            raise EmailAlreadyExistsException("Email already exists")
+            raise EmailAlreadyExistsException()
 
-        password_hash = self.password_service.hash(request.password)
+        # PBKDF2 é CPU puro: fora do event loop (ver docs/PERFORMANCE.md)
+        password_hash = await asyncio.to_thread(self.password_service.hash, request.password)
 
         user = User(
             id=None,

@@ -28,11 +28,13 @@ class AuditLogErrorModel(Base, TimestampMixin):
         index=True
     )
 
-    message: Mapped[str | None] = mapped_column(
+    message: Mapped[str] = mapped_column(
+        String(255),
         nullable=False
     )
 
     stack_trace: Mapped[str | None] = mapped_column(
+        String(255),
         nullable=True
     )
 

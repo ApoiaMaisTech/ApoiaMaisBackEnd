@@ -52,6 +52,15 @@ class Settings(BaseSettings):
     AI_IMAGE_DAILY_QUOTA_PER_USER: int = 20
     AI_IMAGE_FAILURE_COOLDOWN_MINUTES: int = 10
 
+    # retenção de dados (LGPD); aplicada pelo api-worker. Auditoria: mínimo de 180 dias (Marco Civil)
+    RETENTION_ENABLED: bool = True
+    RETENTION_INTERVAL_HOURS: float = 24.0
+    RETENTION_PROCESSED_EVENT_DAYS: int = 30
+    RETENTION_OUTBOX_PUBLISHED_DAYS: int = 7
+    RETENTION_ERROR_LOG_DAYS: int = 90
+    RETENTION_READ_NOTIFICATION_DAYS: int = 180
+    RETENTION_AUDIT_LOG_DAYS: int = 180
+
     # CORS: origens separadas por vírgula
     CORS_ORIGINS: str = (
         "http://localhost:5173,http://127.0.0.1:5173,"
@@ -71,6 +80,18 @@ class Settings(BaseSettings):
         return (
             f"mysql+aiomysql://{self.DB_USER}:{self.DB_PASSWORD}"
             f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        )
+
+    @property
+    def retention_policy(self):
+        from app.infrastructure.database.retention import RetentionPolicy
+
+        return RetentionPolicy(
+            processed_event_days=self.RETENTION_PROCESSED_EVENT_DAYS,
+            outbox_published_days=self.RETENTION_OUTBOX_PUBLISHED_DAYS,
+            error_log_days=self.RETENTION_ERROR_LOG_DAYS,
+            read_notification_days=self.RETENTION_READ_NOTIFICATION_DAYS,
+            audit_log_days=self.RETENTION_AUDIT_LOG_DAYS,
         )
 
     @property

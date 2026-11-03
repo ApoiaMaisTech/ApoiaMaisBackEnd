@@ -1,3 +1,4 @@
+import asyncio
 from app.application.dto.update_user_request import UpdateUserRequest
 from app.domain.repositories.user_repository import UserRepository
 from app.application.dto.create_user_response import UserResponse
@@ -20,16 +21,17 @@ class UpdateUserUseCase:
         # obtem o usuario pelo id, caso nao exista, levanta a excecao UserNotFoundException
         user = await self.repository.get_by_id(user_id)
         if not user:
-            raise UserNotFoundException("User not found")
+            raise UserNotFoundException()
         
         # verifica se o email ja existe no banco de dados
         existing_user = await self.repository.get_by_email(request.email)
         if existing_user and existing_user.id != user_id:
-            raise EmailAlreadyExistsException("Email already exists")
+            raise EmailAlreadyExistsException()
         
         # atualiza o usuario com os novos dados
         user.email = request.email
-        user.password_hash = self.password_service.hash(request.password)
+        # PBKDF2 é CPU puro: fora do event loop (ver docs/PERFORMANCE.md)
+        user.password_hash = await asyncio.to_thread(self.password_service.hash, request.password)
 
         updated_user =await self.repository.update(user)
 

@@ -27,7 +27,7 @@ Formato de `TokenResponse`:
 }
 ```
 
-O token JWT (HS256 por padrão) carrega as claims `user_id`, `user_email`, `role` e `exp`. A resposta ainda não inclui `patientId` para alunos, campo exigido pelo frontend no login de aluno.
+O token JWT (HS256 por padrão) carrega as claims `user_id`, `role`, `iat` e `exp` (sem e-mail; os dados do usuário vêm em `user` na resposta). A resposta ainda não inclui `patientId` para alunos, campo exigido pelo frontend no login de aluno.
 
 ### Usuários (`users.py`)
 
