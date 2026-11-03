@@ -20,6 +20,7 @@ database/
 │   ├── ludic/               World, Stage, Achievement, StoreItem, PatientProgress, PatientAchievement, AIContent
 │   ├── notification/        NotificationModel
 │   ├── patient/             Patient, Guardian, PatientClinical, PatientInventory
+│   ├── messaging/           OutboxEvent, ProcessedEvent
 │   └── auth-db/             Scripts SQL legados (não usados pelo Alembic)
 └── repositories/
     └── sql_user_repository.py   SqlUserRepository
@@ -82,15 +83,45 @@ Pontos de atenção no modelo atual:
 - Não existe vínculo entre `user` e `patient` (aluno ↔ paciente) nem entre professor e paciente.
 - `patient.guardian_id` e `patient_clinical.patient_id` são `String(36)`, enquanto as chaves referenciadas são `Uuid` (`CHAR(32)`).
 - Nenhum `relationship()` do SQLAlchemy está declarado.
-- A migration inicial foi ajustada manualmente e difere dos models em alguns pontos (tipos de data, `ondelete` de `patient_clinical`, tamanho de `message` e `stack_trace` em `log_error`). Revise o resultado de qualquer `--autogenerate`.
+- Models e migrations estão alinhados: `alembic check` não encontra diferenças, e o CI falha se
+  surgir alguma (veja "Validação do schema" abaixo).
 
 ## Scripts SQL legados (`models/auth-db/`)
 
 `schema.sql`, `indexes.sql` e `seeds.sql` descrevem uma tabela `Usuario` com colunas em português, anterior ao Alembic. Não são executados pelo `docker-compose.yml` nem pelas migrations. O schema oficial é o gerado pelo Alembic.
 
+## Validação do schema
+
+| O quê | Onde |
+|---|---|
+| Models x banco sem diferenças (`alembic check`) | CI (`ci.yml`) e `test_schema_integrity.py` |
+| FK com o mesmo tipo da chave referenciada (`CHAR(32)` de `sa.Uuid`) | `test_schema_integrity.py` |
+| Toda FK com `ON DELETE CASCADE` ou `SET NULL` explícito | `test_schema_integrity.py` |
+| Unicidade (email, `dedupe_key`, progresso por fase, ordem do mundo) e chave do inbox | `test_schema_integrity.py` |
+| Paciente → dado clínico em cascata; dado clínico sem paciente recusado | `test_schema_integrity.py` |
+| Instalação do zero, `downgrade base` e reinstalação | `test_migrations.py` (banco descartável) |
+| Escada: cada revisão sobe, desce e sobe de novo | `test_migrations.py` |
+| Upgrade de um banco antigo **com dados** (preserva e normaliza) | `test_migrations.py` |
+| `migrate` no Docker Compose com o `.env.example` | CI, job `docker` |
+
+`test_migrations.py` cria bancos temporários e precisa de um usuário com permissão para isso:
+
+```bash
+MIGRATIONS_TEST_ADMIN_URL=mysql+pymysql://root:root@127.0.0.1:3306 pytest tests/integration/database
+```
+
+Cuidados ao escrever migrations para MySQL:
+
+- `sa.Uuid` vira `CHAR(32)` (hex sem hífens). Coluna que aponta para um id deve ser `sa.Uuid`
+  também, nunca `String(36)`: o valor com hífens não casa com a chave e a FK recusa o INSERT.
+- No `downgrade`, use só `drop_table` (ele já remove os índices). Remover antes um índice que
+  sustenta FK falha com o erro 1553.
+- Índices compostos criados na migration precisam estar em `__table_args__` do model; senão o
+  próximo `--autogenerate` propõe removê-los.
+
 ## Como adicionar uma tabela
 
 1. Criar o model em `models/<dominio>/`, herdando `Base` e, quando fizer sentido, `TimestampMixin`.
-2. Importar o model em `models/__init__.py` e em `app/alembic/env.py`, para que o autogenerate o encontre.
-3. Gerar e revisar a migration (veja [`../../alembic/README`](../../alembic/README)).
+2. Importar o model em `models/__init__.py` (o `app/alembic/env.py` importa esse pacote).
+3. Gerar e revisar a migration (veja [`../../alembic/README`](../../alembic/README)); rode `alembic check`.
 4. Criar a interface do repositório em `app/domain/repositories/` e a implementação em `repositories/`.

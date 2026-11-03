@@ -55,6 +55,7 @@ class AuditLogModel(Base, TimestampMixin):
     )   
 
     user_agent: Mapped[str | None] = mapped_column(
+        String(255),
         nullable=True,
     )   
 

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String, ForeignKey, Text
+from sqlalchemy import ForeignKey, Text, Uuid
 
 
 from app.infrastructure.database import Base
@@ -12,11 +12,14 @@ class PatientClinicalModel(Base, TimestampMixin):
     __tablename__ = 'patient_clinical'
 
 
-    patient_id: Mapped[UUID | None] = mapped_column(
-        String(36),
-        ForeignKey("patient.id", ondelete="SET NULL"),
+    # dado de saúde pertence ao paciente: sem paciente, não existe (CASCADE, como no banco).
+    # SET NULL aqui deixaria prontuário órfão, e chave primária não pode ser nula.
+    # Mesmo tipo de patient.id (CHAR(32)); ver migration b7e2d4f1c9a3.
+    patient_id: Mapped[UUID] = mapped_column(
+        Uuid,
+        ForeignKey("patient.id", ondelete="CASCADE", name="fk_patient_clinical_patient_id"),
         primary_key=True,
-        nullable=True,
+        nullable=False,
         index=True
     )
 

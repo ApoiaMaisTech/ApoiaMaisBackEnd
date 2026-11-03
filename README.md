@@ -108,9 +108,7 @@ ApoiaMaisBackEnd/
 ├── contratos.json
 ├── docker-compose.yml
 ├── Dockerfile
-├── Dockerfile.db
 ├── .env.example
-├── init_db.sh
 ├── main.py
 ├── pytest.ini
 └── requirements.txt
