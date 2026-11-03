@@ -19,7 +19,7 @@ class DeleteUserUseCase:
         user = await self.repository.get_by_id(user_id)
 
         if not user:
-            raise UserNotFoundException("User not found")
+            raise UserNotFoundException()
 
         if deletable_roles is not None and UserRole(user.role) not in deletable_roles:
             raise ForbiddenActionException("Este tipo de conta não pode ser removido.")

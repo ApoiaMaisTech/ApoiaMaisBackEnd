@@ -60,15 +60,20 @@ Observação: `auth.py` define um `get_jwt_service` próprio, que instancia `Jwt
 
 ## Tratamento de erros
 
-Hoje coexistem três formatos de resposta de erro:
+Todas as respostas de erro usam o formato único `ErrorResponse`
+(`success`, `code`, `message`, `errors`, `correlation_id`), produzido pelos handlers de
+`exception_handlers.py`:
 
-| Origem | Status | Corpo |
-|--------|--------|-------|
-| `DomainException` (handler global em `exception_handlers.py`) | sempre 400 | `{"success": false, "message": "...", "errors": []}` |
-| `HTTPException` lançada na rota de login ou nas dependências de auth | 401, 403 ou 404 | `{"detail": "..."}` |
-| Validação do Pydantic (padrão do FastAPI) | 422 | `{"detail": [ ... ]}` |
+| Origem | Status | `code` |
+|--------|--------|--------|
+| `DomainException` | definido na subclasse | definido na subclasse (`USER_NOT_FOUND`...) |
+| `ApiError` (`errors.py`) nas dependências de auth, rate limit e rotas | 401, 403, 429 | `UNAUTHORIZED`, `TOKEN_EXPIRED`, `FORBIDDEN`, `RATE_LIMITED`... |
+| `HTTPException` do Starlette (rota inexistente, método errado) | 404, 405 | padrão do status |
+| Validação do Pydantic | 422 | `VALIDATION_ERROR` |
+| `IntegrityError` / outros `SQLAlchemyError` | 409 / 503 | `CONFLICT` / `SERVICE_UNAVAILABLE` |
+| Exceção não tratada (capturada no `CorrelationIdMiddleware`) | 500 | `INTERNAL_ERROR` |
 
-Exceções não tratadas (por exemplo, `IntegrityError` numa inserção concorrente de e-mail duplicado) resultam em 500.
+Lista completa e regras de validação: [`docs/ERROS.md`](../../docs/ERROS.md).
 
 ## CORS
 

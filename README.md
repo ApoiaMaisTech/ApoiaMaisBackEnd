@@ -277,10 +277,15 @@ API errors follow a standardized response format:
 ```json
 {
   "success": false,
-  "message": "Error message",
-  "errors": []
+  "code": "VALIDATION_ERROR",
+  "message": "Dados inválidos.",
+  "errors": ["email: value is not a valid email address"],
+  "correlation_id": "4f9c2b7e1a3d4c5b8e6f7a8b9c0d1e2f"
 }
 ```
+
+`code` is the stable contract for clients; `message` is display text only. The full list of
+codes and the input validation rules are in [`docs/ERROS.md`](./docs/ERROS.md) (Portuguese).
 
 Domain exceptions are defined separately from HTTP handling:
 

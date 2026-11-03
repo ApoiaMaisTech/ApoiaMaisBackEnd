@@ -9,6 +9,7 @@ from app.api.dependencies.ai_images import (
 )
 from app.api.dependencies.auth import get_current_user, require_roles
 from app.api.dependencies.rate_limit import rate_limit
+from app.api.errors import ERROR_404, ERROR_409
 from app.application.dto.ai_image_response import AiImageResponse
 from app.application.use_cases.ai_images.get_ai_image_usecase import (
     GetAiImageContentUseCase,
@@ -37,7 +38,7 @@ can_request = require_roles(UserRole.STUDENT, UserRole.TEACHER)
 @router.post(
     "/stages/{stage_id}/illustration",
     response_model=AiImageResponse,
-    responses={202: {"model": AiImageResponse}},
+    responses={202: {"model": AiImageResponse}, **ERROR_404},
     dependencies=[Depends(rate_limit("ai-image", settings.RATE_LIMIT_AI_IMAGE))],
 )
 async def request_stage_illustration(
@@ -52,7 +53,7 @@ async def request_stage_illustration(
     return AiImageResponse.from_entity(image)
 
 
-@router.get("/ai-images/{image_id}", response_model=AiImageResponse)
+@router.get("/ai-images/{image_id}", response_model=AiImageResponse, responses=ERROR_404)
 async def get_ai_image(
     image_id: UUID,
     current_user: dict = Depends(get_current_user),
@@ -64,7 +65,7 @@ async def get_ai_image(
 @router.get(
     "/ai-images/{image_id}/content",
     response_class=Response,
-    responses={200: {"content": {"image/png": {}}}},
+    responses={200: {"content": {"image/png": {}}}, **ERROR_404, **ERROR_409},
 )
 async def get_ai_image_content(
     image_id: UUID,

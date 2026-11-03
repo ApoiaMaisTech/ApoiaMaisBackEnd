@@ -1,10 +1,11 @@
 from uuid import UUID
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.api.dependencies.services import get_jwt_service
+from app.api.errors import ApiError
 from app.domain.enums.user import UserRole
 from app.domain.services.jwt_service import JwtService
 
@@ -12,12 +13,17 @@ from app.domain.services.jwt_service import JwtService
 security = HTTPBearer(auto_error=False)
 
 
-def _unauthorized(detail: str) -> HTTPException:
-    return HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=detail,
+def _unauthorized(message: str, code: str = "UNAUTHORIZED") -> ApiError:
+    return ApiError(
+        status.HTTP_401_UNAUTHORIZED,
+        message,
+        code=code,
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+
+def _forbidden(message: str) -> ApiError:
+    return ApiError(status.HTTP_403_FORBIDDEN, message, code="FORBIDDEN")
 
 
 def get_current_user(
@@ -30,9 +36,9 @@ def get_current_user(
     try:
         payload = jwt_service.verify_token(credentials.credentials)
     except jwt.ExpiredSignatureError:
-        raise _unauthorized("Token expirado.")
+        raise _unauthorized("Token expirado.", "TOKEN_EXPIRED")
     except jwt.InvalidTokenError:
-        raise _unauthorized("Token inválido.")
+        raise _unauthorized("Token inválido.", "TOKEN_INVALID")
 
     # token assinado mas com conteúdo inesperado também é inválido
     try:
@@ -42,24 +48,18 @@ def get_current_user(
             "role": UserRole(payload["role"]).value,
         }
     except (KeyError, ValueError):
-        raise _unauthorized("Token inválido.")
+        raise _unauthorized("Token inválido.", "TOKEN_INVALID")
 
 
 def get_current_teacher(current_user: dict = Depends(get_current_user)) -> dict:
     if current_user["role"] != UserRole.TEACHER.value:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso permitido apenas para professores.",
-        )
+        raise _forbidden("Acesso permitido apenas para professores.")
     return current_user
 
 
 def get_current_student(current_user: dict = Depends(get_current_user)) -> dict:
     if current_user["role"] != UserRole.STUDENT.value:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso permitido apenas para alunos.",
-        )
+        raise _forbidden("Acesso permitido apenas para alunos.")
     return current_user
 
 
@@ -68,10 +68,7 @@ def require_roles(*roles: UserRole):
 
     def dependency(current_user: dict = Depends(get_current_user)) -> dict:
         if current_user["role"] not in allowed:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Acesso não permitido para este perfil.",
-            )
+            raise _forbidden("Acesso não permitido para este perfil.")
         return current_user
 
     return dependency

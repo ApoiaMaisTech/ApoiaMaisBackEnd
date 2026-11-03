@@ -1,7 +1,11 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel
 
-# basemodel que define o formato da requisicao de criacao de usarios, independente de qual seja o cargo
+from app.application.dto.validators import Email, NewPassword, PersonName
+
+
+# formato da requisicao de criacao de usuarios, independente do cargo.
+# O cargo vem da rota (/students, /teachers), nunca do corpo: um "role" enviado é ignorado.
 class CreateUserRequest(BaseModel):
-    name: str = Field(min_length=3, max_length=100)
-    email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
+    name: PersonName
+    email: Email
+    password: NewPassword

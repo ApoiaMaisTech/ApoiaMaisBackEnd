@@ -1,4 +1,7 @@
 from .base import DomainException
+
+
 class UserNotFoundException(DomainException):
     status_code = 404
-    default_message = "User not found"
+    code = "USER_NOT_FOUND"
+    default_message = "Usuário não encontrado."

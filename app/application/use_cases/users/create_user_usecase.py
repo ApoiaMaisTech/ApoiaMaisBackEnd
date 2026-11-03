@@ -24,7 +24,7 @@ class CreateUserUseCase:
         existing_user = await self.repository.get_by_email(request.email)
 
         if existing_user:
-            raise EmailAlreadyExistsException("Email already exists")
+            raise EmailAlreadyExistsException()
 
         password_hash = self.password_service.hash(request.password)
 

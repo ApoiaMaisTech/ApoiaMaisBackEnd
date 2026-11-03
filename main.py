@@ -8,6 +8,7 @@ from sqlalchemy import text
 from app.api.routes.users import router as users_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.ai_images import router as ai_images_router
+from app.api.errors import COMMON_ERROR_RESPONSES, ERROR_401, PROTECTED_ERROR_RESPONSES
 from app.api.exception_handlers import register_exception_handlers
 from app.api.dependencies.rate_limit import rate_limit
 from app.api.middleware.correlation import CorrelationIdMiddleware
@@ -46,9 +47,21 @@ app.add_middleware(CorrelationIdMiddleware)
 # limite geral por usuário (ou IP, sem token); rotas sensíveis têm limites próprios mais baixos
 default_rate_limit = [Depends(rate_limit("default", settings.RATE_LIMIT_DEFAULT))]
 
-app.include_router(users_router, prefix="/api/users", tags=["Users"], dependencies=default_rate_limit)
-app.include_router(auth_router, prefix="/api/auth", tags=["Auth"], dependencies=default_rate_limit)
-app.include_router(ai_images_router, prefix="/api", tags=["AI Images"], dependencies=default_rate_limit)
+# todo erro segue ErrorResponse; os status comuns ficam documentados no contrato OpenAPI
+protected_errors = {**COMMON_ERROR_RESPONSES, **PROTECTED_ERROR_RESPONSES}
+
+app.include_router(
+    users_router, prefix="/api/users", tags=["Users"],
+    dependencies=default_rate_limit, responses=protected_errors,
+)
+app.include_router(
+    auth_router, prefix="/api/auth", tags=["Auth"],
+    dependencies=default_rate_limit, responses={**COMMON_ERROR_RESPONSES, **ERROR_401},
+)
+app.include_router(
+    ai_images_router, prefix="/api", tags=["AI Images"],
+    dependencies=default_rate_limit, responses=protected_errors,
+)
 
 
 @app.get("/", include_in_schema=False)

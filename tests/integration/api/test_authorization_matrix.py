@@ -145,7 +145,10 @@ def test_professor_buscando_usuario_inexistente_recebe_404(client, make_user):
     response = client.get(f"/api/users/{uuid4()}", headers=auth_header(teacher))
 
     assert response.status_code == 404
-    assert response.json() == {"success": False, "message": "User not found", "errors": []}
+    body = response.json()
+    assert body["code"] == "USER_NOT_FOUND"
+    assert body["message"] == "Usuário não encontrado."
+    assert body["success"] is False and body["errors"] == []
 
 
 def test_delete_de_usuario_inexistente_retorna_404(client, make_user, repo):
