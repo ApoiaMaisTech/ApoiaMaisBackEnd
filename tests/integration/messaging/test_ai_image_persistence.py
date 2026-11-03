@@ -1,3 +1,4 @@
+import asyncio
 """Repositório, outbox e handlers de resultado contra o MySQL real."""
 import json
 from datetime import datetime, timezone
@@ -221,3 +222,24 @@ async def test_resultado_para_imagem_inexistente_e_ignorado():
     handlers = AiImageResultHandlers(AsyncSessionLocal)
 
     await handlers.on_started(_result(AI_IMAGE_STARTED, AiImageStartedV1(image_id=uuid4())))
+
+
+@pytest.mark.asyncio
+async def test_entregas_simultaneas_do_mesmo_evento_nao_viram_erro(stage_id, user_id, clean_outbox):
+    # reentrega enquanto a primeira ainda processa (prefetch > 1, retry, réplica do worker):
+    # as duas veem "não processado"; a segunda não pode virar erro temporário (retry à toa)
+    image = await _request(stage_id, user_id)
+    event = _generated(image)
+    handlers = [AiImageResultHandlers(AsyncSessionLocal) for _ in range(4)]
+
+    results = await asyncio.gather(*(h.on_generated(event) for h in handlers), return_exceptions=True)
+
+    assert [r for r in results if isinstance(r, BaseException)] == []
+    async with AsyncSessionLocal() as session:
+        rows = (
+            await session.execute(
+                select(ProcessedEventModel).where(ProcessedEventModel.event_id == str(event.event_id))
+            )
+        ).scalars().all()
+    assert len(rows) == 1
+    assert (await _get(image.id)).status == AiImageStatus.COMPLETED

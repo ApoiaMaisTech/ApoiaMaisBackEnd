@@ -60,6 +60,8 @@ A matriz de quem acessa cada rota está no topo de `app/api/routes/users.py` e �
 
 Todas as respostas de erro seguem o formato `{"success": false, "code": "...", "message": "...", "errors": [...], "correlation_id": "..."}`; o `code` é o contrato estável (lista completa e regras de validação em [`docs/ERROS.md`](./docs/ERROS.md)). Toda resposta traz `X-Correlation-ID` (o mesmo valor aparece nos logs da API e dos workers).
 
+Mensagens que esgotaram as tentativas ficam na DLQ e podem ser reprocessadas depois de corrigir a causa: `docker compose run --rm api-worker python -m scripts.reprocessar_dlq --fila apoiamais-api.ai-image-results --listar` (sem `--listar`, reprocessa). Veja [`docs/ARQUITETURA.md`](./docs/ARQUITETURA.md#garantias).
+
 Dados pessoais (LGPD): logs passam por limpeza automática de dados sensíveis, o token não carrega e-mail e o `api-worker` aplica a política de retenção (`RETENTION_*`). Inventário, prazos e pendências em [`docs/LGPD.md`](./docs/LGPD.md).
 
 ### Ilustrações por IA no jogo

@@ -200,11 +200,30 @@ flowchart LR
 - **Outbox**: o evento é gravado na mesma transação do dado; o relay publica com
   publisher confirms e tenta de novo com backoff se o broker estiver fora. Com o
   RabbitMQ parado a API continua respondendo.
-- **Idempotência**: consumidor Python registra `processed_event` (consumer, event_id)
-  na mesma transação; go-worker usa Redis (`aiimg:done`, trava com token) e não chama
-  o provedor de novo se a imagem já estiver no storage.
+- **Idempotência**: consumidor Python grava `processed_event` (consumer, event_id)
+  **antes** de aplicar a mudança, na mesma transação: duas entregas simultâneas do mesmo
+  evento não aplicam duas vezes nem viram erro (a segunda espera o lock da chave e é
+  descartada como duplicata). go-worker usa Redis (`aiimg:done`, trava com token) e não
+  chama o provedor de novo se a imagem já estiver no storage.
+- **Encerramento limpo (drain)**: ao receber SIGTERM os consumidores param de receber,
+  terminam as mensagens em andamento (Python: até 15 s; Go: `WaitGroup`) e só então
+  fecham. O que não terminar volta para a fila sem ack e é reentregue.
 - **Reconexão**: os dois consumidores têm laço explícito de reconexão (testado com
   restart real do RabbitMQ).
+- **Recuperação da DLQ**: depois de corrigir a causa, `python -m scripts.reprocessar_dlq
+  --fila <fila> [--listar] [--limite N] [--tipo T]` devolve as mensagens para a fila com o
+  contador de tentativas zerado. Só dá ack na DLQ depois do confirm do broker, processa no
+  máximo o que estava lá no início (sem loop se falhar de novo) e mantém na DLQ quem já foi
+  reprocessado `--max-reprocessamentos` vezes (`x-replay-count`). Vale para as filas do
+  Python e do Go.
+
+### Operação: o que fazer quando algo cai na DLQ
+
+1. `python -m scripts.reprocessar_dlq --fila <fila> --listar`: veja `x-last-error`
+   (sem dados pessoais) e o `correlation_id` para achar os logs da requisição de origem.
+2. Erro permanente (contrato, versão): corrija o produtor; a mensagem não deve voltar.
+3. Erro temporário que esgotou as tentativas (banco/provedor fora): com a dependência de
+   volta, rode sem `--listar` (opcionalmente com `--tipo`/`--limite`).
 
 ## Observabilidade
 
