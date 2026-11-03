@@ -40,7 +40,7 @@ class InMemoryUserRepository(UserRepository):
 
 
 def auth_header(user: User) -> dict[str, str]:
-    token = get_jwt_service().generate_token(user.id, user.email, user.role)
+    token = get_jwt_service().generate_token(user.id, user.role)
     return {"Authorization": f"Bearer {token}"}
 
 

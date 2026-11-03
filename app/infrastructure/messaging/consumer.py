@@ -8,6 +8,7 @@ from aio_pika.abc import AbstractChannel, AbstractConnection, AbstractIncomingMe
 from pydantic import ValidationError
 
 from app.application.events.envelope import EventEnvelope
+from app.core.redaction import safe_error_text
 from app.infrastructure.messaging.topology import (
     DLX_EXCHANGE,
     ERROR_HEADER,
@@ -146,7 +147,7 @@ class EventConsumer:
             structlog.contextvars.bind_contextvars(event_type=envelope.event_type)
             await handler(envelope)
         except PermanentError as exc:
-            logger.error("evento inválido enviado para a DLQ", extra={"error": str(exc)})
+            logger.error("evento inválido enviado para a DLQ", extra={"error": safe_error_text(exc)})
             await self._dead_letter(message, retry_count, exc)
         except Exception as exc:
             if retry_count >= self._max_retries:
@@ -202,4 +203,5 @@ class EventConsumer:
 
 
 def _short(exc: Exception) -> str:
-    return f"{type(exc).__name__}: {exc}"[:300]
+    # vai no header x-last-error, que fica guardado no RabbitMQ (retry e DLQ)
+    return safe_error_text(exc, 300)

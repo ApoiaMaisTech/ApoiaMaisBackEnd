@@ -285,7 +285,7 @@ def test_perfil_vale_o_do_banco_e_nao_o_do_token(client, make_user, repo):
 def test_token_assinado_com_role_falsa_nao_eleva_privilegio(client, make_user):
     # mesmo que alguém consiga um token assinado dizendo "teacher", vale o perfil do banco
     student = make_user(UserRole.STUDENT)
-    headers = forge_token({"user_id": str(student.id), "user_email": student.email, "role": "teacher"})
+    headers = forge_token({"user_id": str(student.id), "role": "teacher"})
 
     assert client.get("/api/users/", headers=headers).status_code == 403
 

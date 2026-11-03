@@ -20,6 +20,8 @@ engine = create_async_engine(
     DATABASE_URL,
     # SQL no log só quando pedido: em produção vaza dados e polui os logs
     echo=os.getenv("SQL_ECHO", "false").lower() in ("1", "true", "yes"),
+    # LGPD: mensagens de erro do SQLAlchemy não carregam os valores (email, hash, nome...)
+    hide_parameters=True,
     poolclass=NullPool,
 )
 

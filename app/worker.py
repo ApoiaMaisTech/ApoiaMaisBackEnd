@@ -16,6 +16,7 @@ from pathlib import Path
 
 from app.core.config import settings
 from app.core.logging import configure_logging
+from app.infrastructure.database.retention import apply_retention
 from app.infrastructure.database.session import AsyncSessionLocal
 from app.infrastructure.messaging.consumer import EventConsumer
 from app.infrastructure.messaging.handlers.ai_image_results import QUEUE_NAME, AiImageResultHandlers
@@ -36,8 +37,24 @@ def healthcheck() -> int:
     return 0 if age < HEARTBEAT_MAX_AGE_SECONDS else 1
 
 
+async def _maybe_apply_retention(last_run: float | None) -> float | None:
+    """Aplica a retenção (LGPD) no máximo a cada RETENTION_INTERVAL_HOURS. Erro não derruba o worker."""
+    if not settings.RETENTION_ENABLED:
+        return last_run
+    now = time.monotonic()
+    if last_run is not None and now - last_run < settings.RETENTION_INTERVAL_HOURS * 3600:
+        return last_run
+    try:
+        await apply_retention(AsyncSessionLocal, settings.retention_policy)
+    except Exception:
+        logger.exception("erro ao aplicar a retenção de dados")
+    return now
+
+
 async def _relay_loop(relay: OutboxRelay, consumer: EventConsumer, stop: asyncio.Event) -> None:
+    last_retention: float | None = None
     while not stop.is_set():
+        last_retention = await _maybe_apply_retention(last_retention)
         try:
             published = await relay.run_once()
             # só se declara vivo se o banco respondeu e o consumidor está conectado

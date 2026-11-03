@@ -83,7 +83,6 @@ O handler global (`app/api/exception_handlers.py`) converte qualquer `DomainExce
 | `PasswordService` | `hash(password)`, `verify(plain, hashed)` | `PasswordServiceImpl` |
 | `JwtService`      | `generate_token(user_id, role)`, `verify_token(token)` | `JwtServiceImpl` |
 
-Divergência conhecida: `JwtServiceImpl` não herda de `JwtService`, e seu `generate_token` recebe `(user_id, user_email, role)`. O `LoginUseCase` chama a assinatura da implementação.
 
 ## Regras da camada
 

@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.application.events.envelope import EventEnvelope
+from app.core.redaction import safe_error_text
 from app.infrastructure.database.models.messaging.outbox_event_model import OutboxEventModel
 from app.infrastructure.database.types import utcnow
 
@@ -80,7 +81,7 @@ class OutboxRelay:
                         )
                     except Exception as exc:
                         row.attempts += 1
-                        row.last_error = f"{type(exc).__name__}: {exc}"[:500]
+                        row.last_error = safe_error_text(exc, 500)
                         row.next_attempt_at = utcnow() + timedelta(seconds=backoff_seconds(row.attempts))
                         logger.warning(
                             "falha ao publicar evento do outbox",

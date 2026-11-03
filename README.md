@@ -23,7 +23,8 @@ The main API is built with **Python and FastAPI**, following **Clean Architectur
 * RabbitMQ messaging with transactional outbox, retry with backoff, DLQ and idempotent consumers
 * Go worker for AI image generation (fake provider by default, OpenAI optional)
 * Structured JSON logs with `X-Correlation-ID` propagated across services
-* Standardized API error responses
+* Standardized API error responses with stable error codes
+* LGPD controls: log redaction, JWT data minimization, automatic data retention ([docs/LGPD.md](./docs/LGPD.md))
 * Unit and integration tests
 * OpenAPI contract generation
 * Automated contract synchronization

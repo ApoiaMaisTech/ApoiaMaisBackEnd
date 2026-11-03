@@ -25,7 +25,7 @@ class LoginUseCase:
             raise InvalidCredentialsException()
 
         # gera o token de acesso
-        access_token = self.jwt_service.generate_token(user.id, user.email, user.role)
+        access_token = self.jwt_service.generate_token(user.id, user.role)
 
         role_value = user.role.value if isinstance(user.role, UserRole ) else user.role
 

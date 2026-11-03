@@ -6,7 +6,9 @@ from app.domain.enums.user import UserRole
 
 class JwtService(ABC):
     @abstractmethod
-    def generate_token(self, user_id: UUID, user_email: str, role: UserRole) -> str:
+    # o token leva só o necessário (id e perfil): o payload de um JWT é legível por
+    # qualquer um que o tenha (base64), então dado pessoal como o email fica de fora (LGPD)
+    def generate_token(self, user_id: UUID, role: UserRole) -> str:
         pass
 
     @abstractmethod

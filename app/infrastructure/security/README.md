@@ -32,18 +32,20 @@ Construtor:
 JwtServiceImpl(secret_key: str | None = None, algorithm: str = "HS256", expiration_minutes: int = 30)
 ```
 
-Se `secret_key` não for informado, o valor vem de `os.getenv("JWT_SECRET_KEY")`, com `"secret-key"` como padrão.
+`secret_key` é obrigatório (vem de `settings.JWT_SECRET_KEY`); não há valor padrão.
 
 Claims do token:
 
 | Claim        | Conteúdo |
 |--------------|----------|
 | `user_id`    | UUID do usuário (string) |
-| `user_email` | E-mail do usuário |
 | `role`       | Valor da role (`student`, `teacher`, ...) |
+| `iat`        | Emissão |
 | `exp`        | Expiração, calculada a partir de `expiration_minutes` |
 
-Não há refresh token, revogação nem claims `iat`, `iss`, `aud` ou `jti`.
+O e-mail **não** vai no token (LGPD: o payload de um JWT é legível por quem o tiver). A cada
+requisição `get_current_user` confere o usuário no banco, então conta removida perde o acesso
+na hora. Não há refresh token nem claims `iss`, `aud` ou `jti`.
 
 ### Onde é instanciado
 
